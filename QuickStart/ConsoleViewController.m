@@ -17,9 +17,16 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
-    
-    self.appID.text = @"1234";
-    self.authenticatedUserID.text = @"456";
+    NSLog(@"self.appIDLabel.text: %@",self.appIDLabel.text);
+    NSLog(@"self.authenticatedUserIDLabel.text: %@",self.appIDLabel.text);
+
+    if([self.appIDLabel.text isEqual: @""])
+    {
+        NSLog(@"self.appIDLabel.text EMPTY");
+        
+        self.appIDLabel.text = [self.layerClient.appID UUIDString];
+        self.authenticatedUserIDLabel.text = kUserID;
+    }
     
     self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
     

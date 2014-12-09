@@ -7,11 +7,13 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <LayerKit/LayerKit.h>
+#import "Constants.h"
+#import "ViewController.h"
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
-
 
 @end
 

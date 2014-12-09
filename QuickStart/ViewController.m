@@ -9,21 +9,18 @@
 #import "ViewController.h"
 #import "ChatMessageCell.h"
 
-@interface ViewController ()
+@interface ViewController () <UITextViewDelegate, LYRClientDelegate, LYRQueryControllerDelegate>
 
 @end
 
 @implementation ViewController
-{
-    NSArray *recipes;
-}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
     // Initialize table data
-    recipes = [NSArray arrayWithObjects:@"Egg Benedict", @"Mushroom Risotto", @"Full Breakfast", @"Hamburger", @"Ham and Egg Sandwich", @"Creme Brelee", @"White Chocolate Donut", @"Starbucks Coffee", @"Vegetable Curry", @"Instant Noodle with Egg", @"Noodle with BBQ Pork", @"Japanese Noodle with Pork", @"Green Tea", @"Thai Shrimp Cake", @"Angry Birds Cake", @"Ham and Cheese Panini", nil];
+    //messagesArray = [NSArray arrayWithObjects:@"Hey Simul Ator, this is your friend De Vice.",@"Hey De Vice, this is your friend Simul Ator.", nil];
     
     self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
     self.navigationItem.hidesBackButton = YES;
@@ -39,6 +36,52 @@
     self.navigationItem.rightBarButtonItem = consoleButton;
     
     self.textField.delegate=self;
+    self.layerClient.delegate = self;
+
+    self.textField.text = kInitialMessage;
+    
+    // Fetches all conversations between the authenticated user and the supplied user
+    NSArray *participants = @[kUserID, kParticipant];
+    LYRQuery *query = [LYRQuery queryWithClass:[LYRConversation class]];
+    query.predicate = [LYRPredicate predicateWithProperty:@"participants" operator:LYRPredicateOperatorIsEqualTo value:participants];
+    
+    NSError *error;
+    NSOrderedSet *conversations = [self.layerClient executeQuery:query error:&error];
+    if (!error) {
+        NSLog(@"%tu conversations with participants %@", conversations.count, participants);
+    } else {
+        NSLog(@"Query failed with error %@", error);
+    }
+    
+    if (conversations.count == 0) {
+        // Creates and returns a new conversation object with a single participant represented by
+        // your backend's user identifier for the participant
+        LYRConversation *conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID,kParticipant]] options:nil error:nil];
+        self.conversation = conversation;
+        [self logMessage:[NSString stringWithFormat:@"Creating First Conversation"]];
+    }
+    else
+    {
+        self.conversation = [conversations lastObject];
+        [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
+        //[viewController updateChatArea:viewController.conversation];
+    }
+    
+    query = [LYRQuery queryWithClass:[LYRMessage class]];
+    query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
+    query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:YES]];
+    self.queryController = [self.layerClient queryControllerWithQuery:query];
+    self.queryController.delegate = self;
+    
+    BOOL success = [self.queryController execute:&error];
+    if (success) {
+        NSLog(@"Query fetched %tu message objects", [self.queryController numberOfObjectsInSection:0]);
+    } else {
+        NSLog(@"Query failed with error %@", error);
+    }
+    
+    // Do any additional setup after loading the view, typically from a nib.
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -50,26 +93,55 @@
 -(IBAction)openConsole:(id)sender
 {
     NSLog(@"Open Console!");
-    UIViewController *myController = [self.storyboard instantiateViewControllerWithIdentifier:@"ConsoleViewController"];
-    [self.navigationController pushViewController: myController animated:YES];
+    ConsoleViewController *consoleViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"ConsoleViewController"];
+    consoleViewController.layerClient = self.layerClient;    
+    [self.navigationController pushViewController: consoleViewController animated:YES];
 }
 
 
 - (IBAction)sendMessageAction:(id)sender
 {
-    //    [self sendMessage:self.textField.text];
-    NSLog(@"Send!");
+    [self sendMessage:self.textField.text];
     [self.textField resignFirstResponder];
+}
+
+- (void)sendMessage:(NSString*) messageText{
+    
+    // Creates a message part with text/plain MIME Type
+    LYRMessagePart *messagePart = [LYRMessagePart messagePartWithText:messageText];
+    
+    // Creates and returns a new message object with the given conversation and array of message parts
+    LYRMessage *message = [self.layerClient newMessageWithParts:@[messagePart] options:@{LYRMessageOptionsPushNotificationAlertKey: messageText} error:nil];
+    
+    // Sends the specified message
+    NSError *e;
+    BOOL success = [self.conversation sendMessage:message error:&e];
+    if (success) {
+        [self logMessage:[NSString stringWithFormat: @"Message Queued Up to Be Sent: %@",messageText]];
+    }
+    else {
+        [self logMessage:[NSString stringWithFormat: @"Message Send Failed: %@",e]];
+    }
+}
+
+- (void)logMessage:(NSString*) messageText{
+    NSLog(@"MSG: %@",messageText);
+    //    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:[NSString stringWithFormat:@"%@\n%@", self.textView.text, messageText] waitUntilDone:YES];
+    
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [recipes count];
+    return [self.queryController numberOfObjectsInSection:section];
 }
+
+#pragma - mark TableView Methods
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *simpleTableIdentifier = @"ChatMessageCell";
+    
+    self.message = [self.queryController objectAtIndexPath:indexPath];
     
     ChatMessageCell *cell = (ChatMessageCell *)[tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
@@ -77,9 +149,20 @@
         NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ChatMessageCell" owner:self options:nil];
         cell = [nib objectAtIndex:0];
     }
+
+    LYRMessagePart *messagePart = self.message.parts[0];
+    if ([messagePart.MIMEType isEqualToString:@"text/plain"]) {
+        cell.messageLabel.text = [[NSString alloc] initWithData:messagePart.data encoding:NSUTF8StringEncoding];
+    } else {
+        cell.messageLabel.text = [NSString stringWithFormat:@"Cannot display '%@'", messagePart.MIMEType];
+    }
     
-    cell.messageLabel.text = [recipes objectAtIndex:indexPath.row];
-    //cell.imageView.image = [UIImage imageNamed:@"creme_brelee.jpg"];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"HH:mm:ss"];
+    NSString *startTimeString = [formatter stringFromDate:self.message.receivedAt];
+    cell.deviceLabel.text = [NSString stringWithFormat:@"%@ @ %@", self.message.sentByUserID,startTimeString];
+
+    [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
     
     return cell;
 }
@@ -89,38 +172,121 @@
     return 78;
 }
 
-#pragma - mark TextField Delegate Methods
-- (void)textFieldDidBeginEditing:(UITextField *)textField
+#pragma - mark TextView Delegate Methods
+
+
+
+#pragma - mark LYRClientDelegate Delegate Methods
+- (void)layerClient:(LYRClient *)client didReceiveAuthenticationChallengeWithNonce:(NSString *)nonce
 {
-    NSLog(@"textFieldDidBeginEditing!");
-    //    [self animateTextView: YES];
+    NSLog(@"Layer Client did recieve authentication challenge with nonce: %@", nonce);
 }
 
-- (void)textFieldDidEndEditing:(UITextField *)textField
+- (void)layerClient:(LYRClient *)client didAuthenticateAsUserID:(NSString *)userID
 {
-    NSLog(@"textFieldDidEndEditing!");
-    //    [self animateTextView:NO];
+    NSLog(@"Layer Client did recieve authentication nonce");
 }
-/*
- - (void) animateTextView:(BOOL) up
- {
- const int movementDistance =10; // tweak as needed
- const float movementDuration = 0.3f; // tweak as needed
- int movement= movement = (up ? -movementDistance : movementDistance);
- NSLog(@"%d",movement);
- 
- [UIView beginAnimations: @"anim" context: nil];
- [UIView setAnimationBeginsFromCurrentState: YES];
- [UIView setAnimationDuration: movementDuration];
- self.view.frame = CGRectOffset(self.inputView.frame, 0, movement);
- [UIView commitAnimations];
- }
- */
-- (BOOL)textFieldShouldReturn:(UITextField *)textField
+
+- (void)layerClientDidDeauthenticate:(LYRClient *)client
 {
-    [textField resignFirstResponder];
-    
-    return YES;
+    NSLog(@"Layer Client did deauthenticate");
+}
+
+- (void)layerClient:(LYRClient *)client didFinishSynchronizationWithChanges:(NSArray *)changes
+{
+    NSLog(@"Layer Client did finish sychronization");
+}
+
+- (void)layerClient:(LYRClient *)client didFailSynchronizationWithError:(NSError *)error
+{
+    NSLog(@"Layer Client did fail synchronization with error: %@", error);
+}
+
+- (void)layerClient:(LYRClient *)client willAttemptToConnect:(NSUInteger)attemptNumber afterDelay:(NSTimeInterval)delayInterval maximumNumberOfAttempts:(NSUInteger)attemptLimit
+{
+    NSLog(@"Layer Client will attempt to connect");
+}
+
+- (void)layerClientDidConnect:(LYRClient *)client
+{
+    NSLog(@"Layer Client did connect");
+}
+
+- (void)layerClient:(LYRClient *)client didLoseConnectionWithError:(NSError *)error
+{
+    NSLog(@"Layer Client did lose connection with error: %@", error);
+}
+
+- (void)layerClientDidDisconnect:(LYRClient *)client
+{
+    NSLog(@"Layer Client did disconnect with error");
+}
+
+#pragma - mark LYRQueryControllerDelegate Delegate Methods
+
+- (void)didReceiveLayerClientWillBeginSynchronizationNotification:(NSNotification *)notification
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+}
+
+- (void)didReceiveLayerClientDidFinishSynchronizationNotification:(NSNotification *)notification
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+}
+
+- (void)queryControllerWillChangeContent:(LYRQueryController *)queryController
+{
+    [self.tableView beginUpdates];
+}
+
+- (void)queryController:(LYRQueryController *)controller
+        didChangeObject:(id)object
+            atIndexPath:(NSIndexPath *)indexPath
+          forChangeType:(LYRQueryControllerChangeType)type
+           newIndexPath:(NSIndexPath *)newIndexPath
+{
+    switch (type) {
+        case LYRQueryControllerChangeTypeInsert:
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+        case LYRQueryControllerChangeTypeUpdate:
+            [self.tableView reloadRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+        case LYRQueryControllerChangeTypeMove:
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+        case LYRQueryControllerChangeTypeDelete:
+            [self.tableView deleteRowsAtIndexPaths:@[indexPath]
+                                  withRowAnimation:UITableViewRowAnimationAutomatic];
+            break;
+        default:
+            break;
+    }
+}
+
+- (void)queryControllerDidChangeContent:(LYRQueryController *)queryController
+{
+    [self.tableView endUpdates];
+}
+
+- (void) didReceiveLayerObjectsDidChangeNotification:(NSNotification *)notification;
+{
+    NSArray *changes = [notification.userInfo objectForKey:LYRClientObjectChangesUserInfoKey];
+    for (NSDictionary *change in changes) {
+        
+        if ([[change objectForKey:LYRObjectChangeObjectKey] isKindOfClass:[LYRConversation class]]) {
+            NSLog(@"Conversation Updated");
+        }
+        
+        if ([[change objectForKey:LYRObjectChangeObjectKey]isKindOfClass:[LYRMessage class]]) {
+            NSLog(@"Message Updated");
+        }
+    }
 }
 
 @end

@@ -9,15 +9,176 @@
 #import "AppDelegate.h"
 
 @interface AppDelegate ()
-
+@property (nonatomic) LYRClient *layerClient;
+@property (nonatomic,retain) ViewController *viewController;
 @end
 
 @implementation AppDelegate
 
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+    
+    //Show a usage the first time the app is launched
+    [self showFirstTimeMessage];
+    
+    UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
+    ViewController *controller = (ViewController *)navigationController.topViewController;
+    self.viewController = controller;
+    
+    
+    // Set up push notifications
+    // Checking if app is running iOS 8
+    if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
+        // Register device for iOS8
+        UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound
+                                                                                             categories:nil];
+        [application registerUserNotificationSettings:notificationSettings];
+        [application registerForRemoteNotifications];
+    } else {
+        // Register device for iOS7
+        [application registerForRemoteNotificationTypes:UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge];
+    }
+    
+    
+    // Initializes a LYRClient object
+    NSUUID *appID = [[NSUUID alloc] initWithUUIDString:kAppID];
+    
+  self.layerClient = [LYRClient clientWithAppID:appID];
+  self.viewController.layerClient = self.layerClient;
+    
+    // Authenticate Layer
+    [self.layerClient connectWithCompletion:^(BOOL success, NSError *error) {
+        if (!success) {
+            NSLog(@"Failed to connect to Layer: %@", error);
+            //abort();
+            return;
+        }
+        
+        if (!self.layerClient.authenticatedUserID) {
+            [self.layerClient requestAuthenticationNonceWithCompletion:^(NSString *nonce, NSError *error) {
+                if (!nonce) {
+                    NSLog(@"Request for Layer authentication nonce failed: %@", error);
+                    abort();
+                    return;
+                }
+                
+                NSURL *identityTokenURL = [NSURL URLWithString:@"https://layer-identity-provider.herokuapp.com/identity_tokens"];
+                NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:identityTokenURL];
+                request.HTTPMethod = @"POST";
+                [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+                [request setValue:@"application/json" forHTTPHeaderField:@"Accept"];
+                NSDictionary *parameters = @{ @"app_id": [self.layerClient.appID UUIDString], @"user_id": kUserID, @"nonce": nonce };
+                __block NSError *serializationError = nil;
+                NSData *requestBody = [NSJSONSerialization dataWithJSONObject:parameters options:0 error:&serializationError];
+                if (!requestBody) {
+                    NSLog(@"Failed serialization of request parameters: %@", serializationError);
+                    abort();
+                    return;
+                }
+                request.HTTPBody = requestBody;
+                
+                NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+                NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
+                [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                    if (!data) {
+                        NSLog(@"Failed requesting identity token: %@", error);
+                        abort();
+                        return;
+                    }
+                    
+                    NSDictionary *responseObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:&serializationError];
+                    if (!responseObject) {
+                        NSLog(@"Failed deserialization of response: %@", serializationError);
+                        abort();
+                        return;
+                    }
+                    
+                    NSString *identityToken = responseObject[@"identity_token"];
+                    [self.layerClient authenticateWithIdentityToken:identityToken completion:^(NSString *authenticatedUserID, NSError *error) {
+                        if (!authenticatedUserID) {
+                            NSLog(@"Failed authentication with Layer: %@", error);
+                            return;
+                        }
+                    }];
+                }] resume];
+            }];
+        }        
+    }];
+    
     return YES;
+}
+
+- (void)showFirstTimeMessage;
+{
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"HasLaunchedOnce"])
+    {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"HasLaunchedOnce"];
+        [[NSUserDefaults standardUserDefaults] synchronize];
+        // This is the first launch ever
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Hello!" message:@"This app is a very simple chat app using Layer.  Launch this app on a Simulator and a Device to start a 1:1 conversation." delegate:self cancelButtonTitle:nil otherButtonTitles:nil];
+        [alert addButtonWithTitle:@"Got It!"];
+        [alert show];
+    }
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
+{
+    NSError *error;
+    BOOL success = [self.layerClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
+    if (success) {
+        NSLog(@"Application did register for remote notifications");
+    } else {
+        NSLog(@"Error updating Layer device token for push:%@", error);
+    }
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+{
+    __block LYRMessage *message = [self messageFromRemoteNotification:userInfo];
+    if (application.applicationState == UIApplicationStateInactive && message) {
+        //Navigate user to right part of the app here
+    }
+    
+    NSError *error;
+    BOOL success = [self.layerClient synchronizeWithRemoteNotification:userInfo completion:^(UIBackgroundFetchResult fetchResult, NSError *error) {
+        if (fetchResult == UIBackgroundFetchResultFailed) {
+            NSLog(@"Failed processing remote notification: %@", error);
+        }
+        
+        message = [self messageFromRemoteNotification:userInfo];
+        //Navigate user to right part of the app here
+        NSString *alertString = [[NSString alloc] initWithData:[message.parts[0] data] encoding:NSUTF8StringEncoding];
+        
+        UILocalNotification *localNotification = [UILocalNotification new];
+        localNotification.alertBody = alertString;
+        [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+        completionHandler(fetchResult);
+    }];
+    if (success) {
+        NSLog(@"Application did complete remote notification sycn");
+    } else {
+        NSLog(@"Error handling push notification: %@", error);
+        completionHandler(UIBackgroundFetchResultNoData);
+    }
+}
+
+- (LYRMessage *)messageFromRemoteNotification:(NSDictionary *)remoteNotification
+{
+    // Fetch message object from LayerKit
+    NSURL *messageURL = [NSURL URLWithString:[remoteNotification valueForKeyPath:@"layer.event_url"]];
+    //NSSet *messages = [viewController.layerClient messagesForIdentifiers:[NSSet setWithObject:messageURL]];
+    
+    LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
+    query.predicate = [LYRPredicate predicateWithProperty:@"identifier" operator:LYRPredicateOperatorIsIn value:[NSSet setWithObject:messageURL]];
+    
+    NSError *error;
+    NSOrderedSet *messages = [self.layerClient executeQuery:query error:&error];
+    if (!error) {
+        NSLog(@"messageFromRemoteNotification Fetched %tu messages", messages.count);
+    } else {
+        NSLog(@"messageFromRemoteNotification Query failed with error %@", error);
+    }
+    
+    return [messages firstObject];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
