@@ -36,7 +36,7 @@
 */
     self.inputTextView.delegate=self;
     self.layerClient.delegate = self;
-
+    
     self.inputTextView.text = kInitialMessage;
     
     // Fetches all conversations between the authenticated user and the supplied user
@@ -170,7 +170,7 @@
         NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ChatMessageCell" owner:self options:nil];
         cell = [nib objectAtIndex:0];
     }
-
+    
     LYRMessagePart *messagePart = self.message.parts[0];
     if ([messagePart.MIMEType isEqualToString:@"text/plain"]) {
         cell.messageLabel.text = [[NSString alloc] initWithData:messagePart.data encoding:NSUTF8StringEncoding];
@@ -384,7 +384,16 @@
 - (void)didReceiveTypingIndicator:(NSNotification *)notification
 {
     NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
-    NSLog(@"Received typing indicator from %@ for conversation", participantID);
+    LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
+    
+    if (typingIndicator == LYRTypingDidBegin) {
+        self.typingIndicatorLabel.alpha = 1;
+        self.typingIndicatorLabel.text = [NSString stringWithFormat:@"%@ is typing...",participantID];
+    }
+    else {
+        self.typingIndicatorLabel.alpha = 0;
+        self.typingIndicatorLabel.text = @"";
+    }
 }
 
 

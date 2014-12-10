@@ -21,6 +21,8 @@
 @property (nonatomic) LYRMessage *message;
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
+@property (nonatomic, weak) IBOutlet UILabel *typingIndicatorLabel;
+
 @property (nonatomic, retain) LYRQueryController *queryController;
 
 - (void)logMessage:(NSString*) messageText;

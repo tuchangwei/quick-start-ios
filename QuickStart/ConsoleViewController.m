@@ -22,8 +22,6 @@
 
     if([self.appIDLabel.text isEqual: @""])
     {
-        NSLog(@"self.appIDLabel.text EMPTY");
-        
         self.appIDLabel.text = [self.layerClient.appID UUIDString];
         self.authenticatedUserIDLabel.text = kUserID;
     }
