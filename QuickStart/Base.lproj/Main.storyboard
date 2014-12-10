@@ -50,8 +50,8 @@
                     <navigationItem key="navigationItem" id="BtC-jk-o5x"/>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina47"/>
                     <connections>
+                        <outlet property="inputTextView" destination="UNU-sT-1f9" id="tdL-RI-wp2"/>
                         <outlet property="tableView" destination="9lU-Gi-eE5" id="1F5-4J-bf3"/>
-                        <outlet property="textField" destination="UNU-sT-1f9" id="Wtb-TK-czi"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>

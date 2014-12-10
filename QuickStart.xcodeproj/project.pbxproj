@@ -124,8 +124,8 @@
 				884A72F51A302F280069F62C /* ConsoleViewController.m */,
 				884A72F71A302F440069F62C /* ChatMessageCell.h */,
 				884A72F81A302F440069F62C /* ChatMessageCell.m */,
-				884A72D81A302EE00069F62C /* Main.storyboard */,
 				884A73001A302F9A0069F62C /* ChatMessageCell.xib */,
+				884A72D81A302EE00069F62C /* Main.storyboard */,
 				884A72DB1A302EE00069F62C /* Images.xcassets */,
 				884A72DD1A302EE00069F62C /* LaunchScreen.xib */,
 				884A72CE1A302EE00069F62C /* Supporting Files */,
@@ -221,6 +221,7 @@
 				TargetAttributes = {
 					884A72CA1A302EE00069F62C = {
 						CreatedOnToolsVersion = 6.1;
+						DevelopmentTeam = U46UP347QQ;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;
@@ -442,6 +443,7 @@
 			baseConfigurationReference = CF844DA0B549E45D5F7C9DCE /* Pods-QuickStart.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Abir Majumdar (76A3K77WGT)";
 				INFOPLIST_FILE = QuickStart/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -454,6 +456,7 @@
 			baseConfigurationReference = 557830992B049729272A99B2 /* Pods-QuickStart.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer: Abir Majumdar (76A3K77WGT)";
 				INFOPLIST_FILE = QuickStart/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";

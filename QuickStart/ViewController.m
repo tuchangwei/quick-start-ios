@@ -20,13 +20,12 @@
     // Do any additional setup after loading the view, typically from a nib.
     
     // Initialize table data
-    //messagesArray = [NSArray arrayWithObjects:@"Hey Simul Ator, this is your friend De Vice.",@"Hey De Vice, this is your friend Simul Ator.", nil];
-    
     self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
     self.navigationItem.hidesBackButton = YES;
     
     self.title = @"";
-    
+/*
+    // Removing Console button for now.
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     UIImage *butImage = [[UIImage imageNamed:@"Console"] stretchableImageWithLeftCapWidth:10 topCapHeight:10];
     [button setBackgroundImage:butImage forState:UIControlStateNormal];
@@ -34,11 +33,11 @@
     button.frame = CGRectMake(0, 0, 22, 22);
     UIBarButtonItem *consoleButton = [[UIBarButtonItem alloc] initWithCustomView:button];
     self.navigationItem.rightBarButtonItem = consoleButton;
-    
-    self.textField.delegate=self;
+*/
+    self.inputTextView.delegate=self;
     self.layerClient.delegate = self;
 
-    self.textField.text = kInitialMessage;
+    self.inputTextView.text = kInitialMessage;
     
     // Fetches all conversations between the authenticated user and the supplied user
     NSArray *participants = @[kUserID, kParticipant];
@@ -64,7 +63,6 @@
     {
         self.conversation = [conversations lastObject];
         [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
-        //[viewController updateChatArea:viewController.conversation];
     }
     
     query = [LYRQuery queryWithClass:[LYRMessage class]];
@@ -80,8 +78,31 @@
         NSLog(@"Query failed with error %@", error);
     }
     
+    [self markAllMessagesAsRead];
+    
     // Do any additional setup after loading the view, typically from a nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    
+    // Register for typing indicator notifications
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(didReceiveTypingIndicator:)
+                                                 name:LYRConversationDidReceiveTypingIndicatorNotification object:self.conversation];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    
+    self.queryController = nil;
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self
+                                                    name:LYRConversationDidReceiveTypingIndicatorNotification
+                                                  object:self.conversation];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -101,8 +122,8 @@
 
 - (IBAction)sendMessageAction:(id)sender
 {
-    [self sendMessage:self.textField.text];
-    [self.textField resignFirstResponder];
+    [self sendMessage:self.inputTextView.text];
+    [self.inputTextView resignFirstResponder];
 }
 
 - (void)sendMessage:(NSString*) messageText{
@@ -142,7 +163,7 @@
     static NSString *simpleTableIdentifier = @"ChatMessageCell";
     
     self.message = [self.queryController objectAtIndexPath:indexPath];
-    
+
     ChatMessageCell *cell = (ChatMessageCell *)[tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
     if (cell == nil) {
@@ -157,12 +178,43 @@
         cell.messageLabel.text = [NSString stringWithFormat:@"Cannot display '%@'", messagePart.MIMEType];
     }
     
+    cell.deviceLabel.text = self.message.sentByUserID;
+
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"HH:mm:ss"];
-    NSString *startTimeString = [formatter stringFromDate:self.message.receivedAt];
-    cell.deviceLabel.text = [NSString stringWithFormat:@"%@ @ %@", self.message.sentByUserID,startTimeString];
-
-    [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
+    
+    if ([self.message.sentByUserID isEqualToString:kUserID]) {
+        switch ([self.message recipientStatusForUserID:kParticipant]) {
+            case LYRRecipientStatusSent:
+                NSLog(@"Participant: Sent");
+                [cell.messageStatus setImage:[UIImage imageNamed:@"message-sent.jpg"]];
+                cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[formatter stringFromDate:self.message.sentAt]];
+                break;
+                
+            case LYRRecipientStatusDelivered:
+                NSLog(@"Participant: Delivered");
+                [cell.messageStatus setImage:[UIImage imageNamed:@"message-delivered.jpg"]];
+                cell.timestampLabel.text = [NSString stringWithFormat:@"Delivered: %@",[formatter stringFromDate:self.message.sentAt]];
+                break;
+                
+            case LYRRecipientStatusRead:
+                NSLog(@"Participant: Read");
+                [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
+                cell.timestampLabel.text = [NSString stringWithFormat:@"Read: %@",[formatter stringFromDate:self.message.receivedAt]];
+                break;
+                
+            case LYRRecipientStatusInvalid:
+                NSLog(@"Participant: Invalid");
+                break;
+                
+            default:
+                break;
+        }
+    }
+    else{
+        cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[formatter stringFromDate:self.message.sentAt]];
+        [self.message markAsRead:nil];
+    }
     
     return cell;
 }
@@ -174,6 +226,44 @@
 
 #pragma - mark TextView Delegate Methods
 
+
+- (void)textViewDidBeginEditing:(UITextView *)textView {
+    // Sends a typing indicator event to the given conversation.
+    [self.conversation sendTypingIndicator:LYRTypingDidBegin];
+    [self setViewMovedUp:YES];
+}
+
+- (void)setViewMovedUp:(BOOL)movedUp{
+    [UIView beginAnimations:nil context:NULL];
+    [UIView setAnimationDuration:0.3];
+    // Make changes to the view's frame inside the animation block. They will be animated instead
+    // of taking place immediately.
+    CGRect rect = self.view.frame;
+    if (movedUp){
+        if(rect.origin.y == 0)
+            rect.origin.y = self.view.frame.origin.y - 255;
+    }
+    else{
+        if(rect.origin.y < 0)
+            rect.origin.y = self.view.frame.origin.y + 255;
+    }
+    self.view.frame = rect;
+    [UIView commitAnimations];
+}
+
+- (void)textViewDidEndEditing:(UITextView *)textView{
+    // Sends a typing indicator event to the given conversation.
+    [self.conversation sendTypingIndicator:LYRTypingDidFinish];
+}
+
+-(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
+    if([text isEqualToString:@"\n"]) {
+        [self.inputTextView resignFirstResponder];
+        [self setViewMovedUp:NO];
+        return NO;
+    }
+    return YES;
+}
 
 
 #pragma - mark LYRClientDelegate Delegate Methods
@@ -288,5 +378,23 @@
         }
     }
 }
+
+#pragma mark - Receiving Typing Indicator Method
+
+- (void)didReceiveTypingIndicator:(NSNotification *)notification
+{
+    NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
+    NSLog(@"Received typing indicator from %@ for conversation", participantID);
+}
+
+
+
+#pragma mark - Mark All Messages Read Method
+
+- (void)markAllMessagesAsRead
+{
+    [self.conversation markAllMessagesAsRead:nil];
+}
+
 
 @end

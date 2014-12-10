@@ -14,7 +14,7 @@
 @interface ViewController : UIViewController <UITableViewDelegate, UITableViewDataSource,UITextFieldDelegate>
 
 @property (weak, nonatomic) IBOutlet UIButton *sendBtn;
-@property (nonatomic, retain) IBOutlet UITextView *textField;
+@property (nonatomic, retain) IBOutlet UITextView *inputTextView;
 
 @property (nonatomic, retain) LYRClient *layerClient;
 @property (nonatomic) LYRConversation *conversation;
@@ -22,8 +22,6 @@
 @property (weak, nonatomic) IBOutlet UITableView *tableView;
 
 @property (nonatomic, retain) LYRQueryController *queryController;
-
-//@property (nonatomic, retain) ConsoleViewController *consoleViewController;
 
 - (void)logMessage:(NSString*) messageText;
 
