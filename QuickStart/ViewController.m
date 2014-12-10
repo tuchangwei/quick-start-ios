@@ -3,7 +3,7 @@
 //  QuickStart
 //
 //  Created by Abir Majumdar on 12/3/14.
-//  Copyright (c) 2014 Abir Majumdar. All rights reserved.
+//  Copyright (c) 2014 Layer, Inc. All rights reserved.
 //
 
 #import "ViewController.h"
@@ -19,11 +19,13 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
     
-    // Initialize table data
+    // Initialize view
     self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
     self.navigationItem.hidesBackButton = YES;
-    
     self.title = @"";
+    self.inputTextView.delegate=self;
+    self.inputTextView.text = kInitialMessage;
+
 /*
     // Removing Console button for now.
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -34,10 +36,6 @@
     UIBarButtonItem *consoleButton = [[UIBarButtonItem alloc] initWithCustomView:button];
     self.navigationItem.rightBarButtonItem = consoleButton;
 */
-    self.inputTextView.delegate=self;
-    self.layerClient.delegate = self;
-    
-    self.inputTextView.text = kInitialMessage;
     
     // Fetches all conversations between the authenticated user and the supplied user
     NSArray *participants = @[kUserID, kParticipant];
@@ -53,21 +51,24 @@
     }
     
     if (conversations.count == 0) {
-        // Creates and returns a new conversation object with a single participant represented by
-        // your backend's user identifier for the participant
+        // If no conversations exist, create a new conversation object with a single participant
         LYRConversation *conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID,kParticipant]] options:nil error:nil];
         self.conversation = conversation;
         [self logMessage:[NSString stringWithFormat:@"Creating First Conversation"]];
     }
     else
     {
+        // Retrieve the last conversation
         self.conversation = [conversations lastObject];
         [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
     }
     
+    // Retrieve all the messages in conversation
     query = [LYRQuery queryWithClass:[LYRMessage class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
     query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:NO]];
+
+    // Set up query controller
     self.queryController = [self.layerClient queryControllerWithQuery:query];
     self.queryController.delegate = self;
     
@@ -78,29 +79,21 @@
         NSLog(@"Query failed with error %@", error);
     }
     
-    [self markAllMessagesAsRead];
-    
-    float redColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorRed"] floatValue];
-    //NSLog(@"viewDidLoad redColor: %f",redColor);
-    float blueColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorBlue"] floatValue];
-    //NSLog(@"viewDidLoad blueColor: %f",blueColor);
-    float greenColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorGreen"] floatValue];
-    //NSLog(@"viewDidLoad greenColor: %f",greenColor);
-    self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
-                    green:greenColor
-                     blue:blueColor
-                    alpha:1.0f];
-    // Do any additional setup after loading the view, typically from a nib.
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
-}
+    // Mark all conversations as read on launch
+    [self.conversation markAllMessagesAsRead:nil];
 
--(BOOL)canBecomeFirstResponder {
-    return YES;
+    // Get initial nav bar colors from conversation metadata
+    [self setNavbarColorFromConversationMetadata:self.conversation.metadata];
+
+    // Set up Layer Client delegate and Layer Change Notification
+    self.layerClient.delegate = self;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    // Setup for Shake
     [self becomeFirstResponder];
     
     // Register for typing indicator notifications
@@ -111,6 +104,7 @@
 
 - (void)viewWillDisappear:(BOOL)animated
 {
+    // Setup for Shake
     [self resignFirstResponder];
     [super viewWillDisappear:animated];
     
@@ -121,43 +115,45 @@
                                                   object:self.conversation];
 }
 
-- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
-{
-    if (motion == UIEventSubtypeMotionShake)
-    {
-        float redFloat = arc4random() % 100 / 100.0f;
-        float greenFloat = arc4random() % 100 / 100.0f;
-        float blueFloat = arc4random() % 100 / 100.0f;
-        
-        self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redFloat
-                                                                  green:greenFloat
-                                                                   blue:blueFloat
-                                                                  alpha:1.0f];
-        NSDictionary *metadata = @{@"backgroundColorRed" : [[NSNumber numberWithFloat:redFloat] stringValue],
-                                   @"backgroundColorGreen" : [[NSNumber numberWithFloat:greenFloat] stringValue],
-                                   @"backgroundColorBlue" : [[NSNumber numberWithFloat:blueFloat] stringValue]};
-        [self.conversation setValuesForMetadataKeyPathsWithDictionary:metadata merge:YES];
-    }
-}
-
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
+#pragma mark - Receiving Typing Indicator Method
+
+- (void)didReceiveTypingIndicator:(NSNotification *)notification
+{
+    NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
+    LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
+    
+    if (typingIndicator == LYRTypingDidBegin) {
+        self.typingIndicatorLabel.alpha = 1;
+        self.typingIndicatorLabel.text = [NSString stringWithFormat:@"%@ is typing...",participantID];
+    }
+    else {
+        self.typingIndicatorLabel.alpha = 0;
+        self.typingIndicatorLabel.text = @"";
+    }
+}
+
+#pragma - IBActions
 
 -(IBAction)openConsole:(id)sender
 {
-    NSLog(@"Open Console!");
+    // Open Console Window
     ConsoleViewController *consoleViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"ConsoleViewController"];
-    consoleViewController.layerClient = self.layerClient;    
+    consoleViewController.layerClient = self.layerClient;
     [self.navigationController pushViewController: consoleViewController animated:YES];
 }
 
 
 - (IBAction)sendMessageAction:(id)sender
 {
+    // Send Message
     [self sendMessage:self.inputTextView.text];
+    
+    // Lower the keyboard
     [self setViewMovedUp:NO];
     [self.inputTextView resignFirstResponder];
 }
@@ -181,25 +177,45 @@
     }
 }
 
-- (void)logMessage:(NSString*) messageText{
-    NSLog(@"MSG: %@",messageText);
-    //    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:[NSString stringWithFormat:@"%@\n%@", self.textView.text, messageText] waitUntilDone:YES];
-    
+#pragma - Set up for Shake
+
+-(BOOL)canBecomeFirstResponder {
+    return YES;
 }
 
-- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
 {
-    return [self.queryController numberOfObjectsInSection:section];
+    // If user shakes the phone, change the navbar color and set metadata
+    if (motion == UIEventSubtypeMotionShake)
+    {
+        UIColor *newNavBarBackgroundColor = [self getRandomColor];
+        self.navigationController.navigationBar.barTintColor = newNavBarBackgroundColor;
+
+        CGFloat redFloat = 0.0, greenFloat = 0.0, blueFloat = 0.0, alpha =0.0;
+        [newNavBarBackgroundColor getRed:&redFloat green:&greenFloat blue:&blueFloat alpha:&alpha];
+        
+        NSDictionary *metadata = @{@"backgroundColorRed" : [[NSNumber numberWithFloat:redFloat] stringValue],
+                                   @"backgroundColorGreen" : [[NSNumber numberWithFloat:greenFloat] stringValue],
+                                   @"backgroundColorBlue" : [[NSNumber numberWithFloat:blueFloat] stringValue]};
+        [self.conversation setValuesForMetadataKeyPathsWithDictionary:metadata merge:YES];
+    }
 }
 
 #pragma - mark TableView Methods
 
+- (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
+{
+    // Return number of objects in queryController
+    return [self.queryController numberOfObjectsInSection:section];
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    static NSString *simpleTableIdentifier = @"ChatMessageCell";
-    
+    // Get Message Object from queryController
     self.message = [self.queryController objectAtIndexPath:indexPath];
 
+    // Set up custom ChatMessageCell for displaying message
+    static NSString *simpleTableIdentifier = @"ChatMessageCell";
     ChatMessageCell *cell = (ChatMessageCell *)[tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
     
     if (cell == nil) {
@@ -207,34 +223,34 @@
         cell = [nib objectAtIndex:0];
     }
     
+    // Set Message Text
     LYRMessagePart *messagePart = self.message.parts[0];
-    if ([messagePart.MIMEType isEqualToString:@"text/plain"]) {
+    if ([messagePart.MIMEType isEqualToString:kMIMETypeTextPlain]) {
         cell.messageLabel.text = [[NSString alloc] initWithData:messagePart.data encoding:NSUTF8StringEncoding];
     } else {
         cell.messageLabel.text = [NSString stringWithFormat:@"Cannot display '%@'", messagePart.MIMEType];
     }
     
+    // Set Sender Info
     cell.deviceLabel.text = self.message.sentByUserID;
-
+    
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"HH:mm:ss"];
-    
+
+    // If the message was sent by current user, show Receipent Status Indicators
     if ([self.message.sentByUserID isEqualToString:kUserID]) {
         switch ([self.message recipientStatusForUserID:kParticipant]) {
             case LYRRecipientStatusSent:
-                //NSLog(@"Participant: Sent");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-sent.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[formatter stringFromDate:self.message.sentAt]];
                 break;
                 
             case LYRRecipientStatusDelivered:
-                //NSLog(@"Participant: Delivered");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-delivered.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Delivered: %@",[formatter stringFromDate:self.message.sentAt]];
                 break;
                 
             case LYRRecipientStatusRead:
-                //NSLog(@"Participant: Read");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Read: %@",[formatter stringFromDate:self.message.receivedAt]];
                 break;
@@ -247,6 +263,7 @@
                 break;
         }
     }
+    // If the message was sent by the participant, show the sentAt time and mark the message as read
     else{
         cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[formatter stringFromDate:self.message.sentAt]];
         [self.message markAsRead:nil];
@@ -262,18 +279,22 @@
 
 #pragma - mark TextView Delegate Methods
 
-
 - (void)textViewDidBeginEditing:(UITextView *)textView {
     // Sends a typing indicator event to the given conversation.
     [self.conversation sendTypingIndicator:LYRTypingDidBegin];
     [self setViewMovedUp:YES];
 }
 
+- (void)textViewDidEndEditing:(UITextView *)textView{
+    // Sends a typing indicator event to the given conversation.
+    [self.conversation sendTypingIndicator:LYRTypingDidFinish];
+}
+
+// Move up the view when the keyboard is shown
 - (void)setViewMovedUp:(BOOL)movedUp{
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationDuration:0.3];
-    // Make changes to the view's frame inside the animation block. They will be animated instead
-    // of taking place immediately.
+
     CGRect rect = self.view.frame;
     if (movedUp){
         if(rect.origin.y == 0)
@@ -287,11 +308,7 @@
     [UIView commitAnimations];
 }
 
-- (void)textViewDidEndEditing:(UITextView *)textView{
-    // Sends a typing indicator event to the given conversation.
-    [self.conversation sendTypingIndicator:LYRTypingDidFinish];
-}
-
+// If the user hits Return then dismiss the keyboard and move the view back down
 -(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text {
     if([text isEqualToString:@"\n"]) {
         [self.inputTextView resignFirstResponder];
@@ -300,7 +317,6 @@
     }
     return YES;
 }
-
 
 #pragma - mark LYRClientDelegate Delegate Methods
 - (void)layerClient:(LYRClient *)client didReceiveAuthenticationChallengeWithNonce:(NSString *)nonce
@@ -371,6 +387,7 @@
           forChangeType:(LYRQueryControllerChangeType)type
            newIndexPath:(NSIndexPath *)newIndexPath
 {
+    // Automatically update tableview when there are change events
     switch (type) {
         case LYRQueryControllerChangeTypeInsert:
             [self.tableView insertRowsAtIndexPaths:@[newIndexPath]
@@ -402,22 +419,18 @@
 
 - (void) didReceiveLayerObjectsDidChangeNotification:(NSNotification *)notification;
 {
+    // Listen for Conversation Updates
     NSArray *changes = [notification.userInfo objectForKey:LYRClientObjectChangesUserInfoKey];
     for (NSDictionary *change in changes) {
         id changeObject = [change objectForKey:LYRObjectChangeObjectKey];
         if ([[change objectForKey:LYRObjectChangeObjectKey] isKindOfClass:[LYRConversation class]]) {
             NSLog(@"Conversation Updated");
+            
             LYRConversation *changedConversation = (LYRConversation*)changeObject;
-            float redColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorRed"] floatValue];
-            //NSLog(@"Changed redColor: %f",redColor);
-            float blueColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorBlue"] floatValue];
-            //NSLog(@"Changed blueColor: %f",blueColor);
-            float greenColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorGreen"] floatValue];
-            //NSLog(@"Changed greenColor: %f",greenColor);
-            self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
-                                                             green:greenColor
-                                                              blue:blueColor
-                                                             alpha:1.0f];
+
+            // Get RBG for NavBar from metadata and change it's color
+            // Get initial nav bar colors from conversation metadata
+            [self setNavbarColorFromConversationMetadata:changedConversation.metadata];
 
         }
         
@@ -427,31 +440,35 @@
     }
 }
 
-#pragma mark - Receiving Typing Indicator Method
+#pragma - mark General Helper Methods
 
-- (void)didReceiveTypingIndicator:(NSNotification *)notification
-{
-    NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
-    LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
+- (void)logMessage:(NSString*) messageText{
+    NSLog(@"MSG: %@",messageText);
+    //    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:[NSString stringWithFormat:@"%@\n%@", self.textView.text, messageText] waitUntilDone:YES];
     
-    if (typingIndicator == LYRTypingDidBegin) {
-        self.typingIndicatorLabel.alpha = 1;
-        self.typingIndicatorLabel.text = [NSString stringWithFormat:@"%@ is typing...",participantID];
-    }
-    else {
-        self.typingIndicatorLabel.alpha = 0;
-        self.typingIndicatorLabel.text = @"";
-    }
 }
 
-
-
-#pragma mark - Mark All Messages Read Method
-
-- (void)markAllMessagesAsRead
+- (UIColor *) getRandomColor
 {
-    [self.conversation markAllMessagesAsRead:nil];
+    float redFloat = arc4random() % 100 / 100.0f;
+    float greenFloat = arc4random() % 100 / 100.0f;
+    float blueFloat = arc4random() % 100 / 100.0f;
+    
+    return [UIColor colorWithRed:redFloat
+                           green:greenFloat
+                            blue:blueFloat
+                           alpha:1.0f];
 }
 
+-(void) setNavbarColorFromConversationMetadata:(NSDictionary *)metadata
+{
+    float redColor = (float)[[metadata valueForKey:@"backgroundColorRed"] floatValue];
+    float blueColor = (float)[[metadata valueForKey:@"backgroundColorBlue"] floatValue];
+    float greenColor = (float)[[metadata valueForKey:@"backgroundColorGreen"] floatValue];
+    self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
+                                                                           green:greenColor
+                                                                            blue:blueColor
+                                                                           alpha:1.0f];
+}
 
 @end

@@ -3,7 +3,7 @@
 //  QuickStart
 //
 //  Created by Abir Majumdar on 12/3/14.
-//  Copyright (c) 2014 Abir Majumdar. All rights reserved.
+//  Copyright (c) 2014 Layer, Inc. All rights reserved.
 //
 
 #import "ConsoleViewController.h"

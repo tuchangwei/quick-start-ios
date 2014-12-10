@@ -3,7 +3,7 @@
 //  QuickStart
 //
 //  Created by Abir Majumdar on 12/3/14.
-//  Copyright (c) 2014 Abir Majumdar. All rights reserved.
+//  Copyright (c) 2014 Layer, Inc. All rights reserved.
 //
 
 #import "AppDelegate.h"
@@ -28,6 +28,9 @@
     
     
     // Set up push notifications
+    // For more information about Push, check out:
+    // https://developer.layer.com/docs/guides/ios#push-notification
+
     // Checking if app is running iOS 8
     if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
         // Register device for iOS8
@@ -43,9 +46,8 @@
     
     // Initializes a LYRClient object
     NSUUID *appID = [[NSUUID alloc] initWithUUIDString:kAppID];
-    
-  self.layerClient = [LYRClient clientWithAppID:appID];
-  self.viewController.layerClient = self.layerClient;
+    self.layerClient = [LYRClient clientWithAppID:appID];
+    self.viewController.layerClient = self.layerClient;
     
     // Authenticate Layer
     [self.layerClient connectWithCompletion:^(BOOL success, NSError *error) {
@@ -55,6 +57,7 @@
             return;
         }
         
+        // If the current user isn't authenticated, request authentication
         if (!self.layerClient.authenticatedUserID) {
             [self.layerClient requestAuthenticationNonceWithCompletion:^(NSString *nonce, NSError *error) {
                 if (!nonce) {
@@ -63,6 +66,7 @@
                     return;
                 }
                 
+                // Get identity token from the Layer Identity Service (used only for staging apps)
                 NSURL *identityTokenURL = [NSURL URLWithString:@"https://layer-identity-provider.herokuapp.com/identity_tokens"];
                 NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:identityTokenURL];
                 request.HTTPMethod = @"POST";
@@ -124,6 +128,9 @@
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
 {
+    // Send device token to Layer so Layer can send pushes to this device.
+    // For more information about Push, check out:
+    // https://developer.layer.com/docs/guides/ios#push-notification
     NSError *error;
     BOOL success = [self.layerClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
     if (success) {
@@ -135,9 +142,11 @@
 
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
+    
+    
+    //Get Message from Metadata
     __block LYRMessage *message = [self messageFromRemoteNotification:userInfo];
     if (application.applicationState == UIApplicationStateInactive && message) {
-        //Navigate user to right part of the app here
     }
     
     NSError *error;
@@ -147,12 +156,12 @@
         }
         
         message = [self messageFromRemoteNotification:userInfo];
-        //Navigate user to right part of the app here
-        NSString *alertString = [[NSString alloc] initWithData:[message.parts[0] data] encoding:NSUTF8StringEncoding];
-        
-        UILocalNotification *localNotification = [UILocalNotification new];
-        localNotification.alertBody = alertString;
-        [[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
+
+        //Uncomment this code if you are using silent notifications and want to show a local notification
+        //NSString *alertString = [[NSString alloc] initWithData:[message.parts[0] data] encoding:NSUTF8StringEncoding];
+        //UILocalNotification *localNotification = [UILocalNotification new];
+        //localNotification.alertBody = alertString;
+        //[[UIApplication sharedApplication] presentLocalNotificationNow:localNotification];
         completionHandler(fetchResult);
     }];
     if (success) {
@@ -165,10 +174,10 @@
 
 - (LYRMessage *)messageFromRemoteNotification:(NSDictionary *)remoteNotification
 {
-    // Fetch message object from LayerKit
-    NSURL *messageURL = [NSURL URLWithString:[remoteNotification valueForKeyPath:@"layer.event_url"]];
-    //NSSet *messages = [viewController.layerClient messagesForIdentifiers:[NSSet setWithObject:messageURL]];
+    // Retrieve message URL from Push Notification
+    NSURL *messageURL = [NSURL URLWithString:[remoteNotification valueForKeyPath:@"layer.message_identifier"]];
     
+    //Retrieve LYRMessage from Message URL
     LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"identifier" operator:LYRPredicateOperatorIsIn value:[NSSet setWithObject:messageURL]];
     
@@ -179,9 +188,9 @@
     } else {
         NSLog(@"messageFromRemoteNotification Query failed with error %@", error);
     }
-    
     return [messages firstObject];
 }
+
 
 - (void)applicationWillResignActive:(UIApplication *)application {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
