@@ -17,6 +17,8 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
+     application.applicationSupportsShakeToEdit = YES;
+    
     //Show a usage the first time the app is launched
     [self showFirstTimeMessage];
     

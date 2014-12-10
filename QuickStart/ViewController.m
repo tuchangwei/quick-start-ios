@@ -67,7 +67,7 @@
     
     query = [LYRQuery queryWithClass:[LYRMessage class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
-    query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:YES]];
+    query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:NO]];
     self.queryController = [self.layerClient queryControllerWithQuery:query];
     self.queryController.delegate = self;
     
@@ -80,13 +80,28 @@
     
     [self markAllMessagesAsRead];
     
+    float redColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorRed"] floatValue];
+    //NSLog(@"viewDidLoad redColor: %f",redColor);
+    float blueColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorBlue"] floatValue];
+    //NSLog(@"viewDidLoad blueColor: %f",blueColor);
+    float greenColor = (float)[[self.conversation.metadata valueForKey:@"backgroundColorGreen"] floatValue];
+    //NSLog(@"viewDidLoad greenColor: %f",greenColor);
+    self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
+                    green:greenColor
+                     blue:blueColor
+                    alpha:1.0f];
     // Do any additional setup after loading the view, typically from a nib.
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
+}
+
+-(BOOL)canBecomeFirstResponder {
+    return YES;
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    [self becomeFirstResponder];
     
     // Register for typing indicator notifications
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -96,6 +111,7 @@
 
 - (void)viewWillDisappear:(BOOL)animated
 {
+    [self resignFirstResponder];
     [super viewWillDisappear:animated];
     
     self.queryController = nil;
@@ -103,6 +119,25 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:LYRConversationDidReceiveTypingIndicatorNotification
                                                   object:self.conversation];
+}
+
+- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+    if (motion == UIEventSubtypeMotionShake)
+    {
+        float redFloat = arc4random() % 100 / 100.0f;
+        float greenFloat = arc4random() % 100 / 100.0f;
+        float blueFloat = arc4random() % 100 / 100.0f;
+        
+        self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redFloat
+                                                                  green:greenFloat
+                                                                   blue:blueFloat
+                                                                  alpha:1.0f];
+        NSDictionary *metadata = @{@"backgroundColorRed" : [[NSNumber numberWithFloat:redFloat] stringValue],
+                                   @"backgroundColorGreen" : [[NSNumber numberWithFloat:greenFloat] stringValue],
+                                   @"backgroundColorBlue" : [[NSNumber numberWithFloat:blueFloat] stringValue]};
+        [self.conversation setValuesForMetadataKeyPathsWithDictionary:metadata merge:YES];
+    }
 }
 
 - (void)didReceiveMemoryWarning {
@@ -123,6 +158,7 @@
 - (IBAction)sendMessageAction:(id)sender
 {
     [self sendMessage:self.inputTextView.text];
+    [self setViewMovedUp:NO];
     [self.inputTextView resignFirstResponder];
 }
 
@@ -186,19 +222,19 @@
     if ([self.message.sentByUserID isEqualToString:kUserID]) {
         switch ([self.message recipientStatusForUserID:kParticipant]) {
             case LYRRecipientStatusSent:
-                NSLog(@"Participant: Sent");
+                //NSLog(@"Participant: Sent");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-sent.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[formatter stringFromDate:self.message.sentAt]];
                 break;
                 
             case LYRRecipientStatusDelivered:
-                NSLog(@"Participant: Delivered");
+                //NSLog(@"Participant: Delivered");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-delivered.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Delivered: %@",[formatter stringFromDate:self.message.sentAt]];
                 break;
                 
             case LYRRecipientStatusRead:
-                NSLog(@"Participant: Read");
+                //NSLog(@"Participant: Read");
                 [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Read: %@",[formatter stringFromDate:self.message.receivedAt]];
                 break;
@@ -368,9 +404,21 @@
 {
     NSArray *changes = [notification.userInfo objectForKey:LYRClientObjectChangesUserInfoKey];
     for (NSDictionary *change in changes) {
-        
+        id changeObject = [change objectForKey:LYRObjectChangeObjectKey];
         if ([[change objectForKey:LYRObjectChangeObjectKey] isKindOfClass:[LYRConversation class]]) {
             NSLog(@"Conversation Updated");
+            LYRConversation *changedConversation = (LYRConversation*)changeObject;
+            float redColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorRed"] floatValue];
+            //NSLog(@"Changed redColor: %f",redColor);
+            float blueColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorBlue"] floatValue];
+            //NSLog(@"Changed blueColor: %f",blueColor);
+            float greenColor = (float)[[changedConversation.metadata valueForKey:@"backgroundColorGreen"] floatValue];
+            //NSLog(@"Changed greenColor: %f",greenColor);
+            self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
+                                                             green:greenColor
+                                                              blue:blueColor
+                                                             alpha:1.0f];
+
         }
         
         if ([[change objectForKey:LYRObjectChangeObjectKey]isKindOfClass:[LYRMessage class]]) {
