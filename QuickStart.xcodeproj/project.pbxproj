@@ -14,7 +14,6 @@
 		884A72DC1A302EE00069F62C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 884A72DB1A302EE00069F62C /* Images.xcassets */; };
 		884A72DF1A302EE00069F62C /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 884A72DD1A302EE00069F62C /* LaunchScreen.xib */; };
 		884A72EB1A302EE00069F62C /* QuickStartTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72EA1A302EE00069F62C /* QuickStartTests.m */; };
-		884A72F61A302F280069F62C /* ConsoleViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72F51A302F280069F62C /* ConsoleViewController.m */; };
 		884A72F91A302F440069F62C /* ChatMessageCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72F81A302F440069F62C /* ChatMessageCell.m */; };
 		884A73011A302F9A0069F62C /* ChatMessageCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 884A73001A302F9A0069F62C /* ChatMessageCell.xib */; };
 		88E81F311A318C7E0076423B /* Constants.m in Sources */ = {isa = PBXBuildFile; fileRef = 88E81F301A318C7E0076423B /* Constants.m */; };
@@ -50,8 +49,6 @@
 		884A72E41A302EE00069F62C /* QuickStartTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuickStartTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		884A72E91A302EE00069F62C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		884A72EA1A302EE00069F62C /* QuickStartTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = QuickStartTests.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		884A72F41A302F280069F62C /* ConsoleViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ConsoleViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		884A72F51A302F280069F62C /* ConsoleViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ConsoleViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		884A72F71A302F440069F62C /* ChatMessageCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ChatMessageCell.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		884A72F81A302F440069F62C /* ChatMessageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ChatMessageCell.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		884A73001A302F9A0069F62C /* ChatMessageCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ChatMessageCell.xib; sourceTree = "<group>"; };
@@ -161,8 +158,6 @@
 			children = (
 				884A72D51A302EE00069F62C /* ViewController.h */,
 				884A72D61A302EE00069F62C /* ViewController.m */,
-				884A72F41A302F280069F62C /* ConsoleViewController.h */,
-				884A72F51A302F280069F62C /* ConsoleViewController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -341,7 +336,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				884A72F61A302F280069F62C /* ConsoleViewController.m in Sources */,
 				884A72F91A302F440069F62C /* ChatMessageCell.m in Sources */,
 				884A72D71A302EE00069F62C /* ViewController.m in Sources */,
 				884A72D41A302EE00069F62C /* AppDelegate.m in Sources */,

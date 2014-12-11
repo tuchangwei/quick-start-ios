@@ -17,6 +17,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     
+    // Add support for shake gesture
      application.applicationSupportsShakeToEdit = YES;
     
     //Show a usage the first time the app is launched

@@ -9,7 +9,6 @@
 #import <UIKit/UIKit.h>
 #import <LayerKit/LayerKit.h>
 #import "Constants.h"
-#import "ConsoleViewController.h"
 
 @interface ViewController : UIViewController <UITableViewDelegate, UITableViewDataSource,UITextFieldDelegate>
 

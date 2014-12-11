@@ -17,31 +17,25 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
     
+    // Set up Layer Client delegate and Layer Change Notification
+    self.layerClient.delegate = self;
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
+
+    
+    // Do any additional setup after loading the view, typically from a nib.
     // Initialize view
     self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
     self.navigationItem.hidesBackButton = YES;
     self.title = @"";
     self.inputTextView.delegate=self;
     self.inputTextView.text = kInitialMessage;
-
-/*
-    // Removing Console button for now.
-    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
-    UIImage *butImage = [[UIImage imageNamed:@"Console"] stretchableImageWithLeftCapWidth:10 topCapHeight:10];
-    [button setBackgroundImage:butImage forState:UIControlStateNormal];
-    [button addTarget:self action:@selector(openConsole:) forControlEvents:UIControlEventTouchUpInside];
-    button.frame = CGRectMake(0, 0, 22, 22);
-    UIBarButtonItem *consoleButton = [[UIBarButtonItem alloc] initWithCustomView:button];
-    self.navigationItem.rightBarButtonItem = consoleButton;
-*/
     
     // Fetches all conversations between the authenticated user and the supplied user
     NSArray *participants = @[kUserID, kParticipant];
     LYRQuery *query = [LYRQuery queryWithClass:[LYRConversation class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"participants" operator:LYRPredicateOperatorIsEqualTo value:participants];
-    
+
     NSError *error;
     NSOrderedSet *conversations = [self.layerClient executeQuery:query error:&error];
     if (!error) {
@@ -54,13 +48,24 @@
         // If no conversations exist, create a new conversation object with a single participant
         LYRConversation *conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID,kParticipant]] options:nil error:nil];
         self.conversation = conversation;
-        [self logMessage:[NSString stringWithFormat:@"Creating First Conversation"]];
+        [self logMessage:[NSString stringWithFormat:@"Creating First Conversation:%@",self.conversation.identifier]];
     }
     else
     {
+        LYRConversation *lastConversation = [conversations lastObject];
         // Retrieve the last conversation
-        self.conversation = [conversations lastObject];
+        self.conversation = lastConversation;
         [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
+
+        // Housecleaning: There should never be more than 1 conversations between these 2 users.
+        // If not, delete every conversation except the last one.
+        for(LYRConversation *conversation in conversations)
+        {
+            if(conversation != lastConversation)
+            {
+                [conversation delete:LYRDeletionModeAllParticipants error:nil];
+            }
+        }
     }
     
     // Retrieve all the messages in conversation
@@ -84,10 +89,6 @@
 
     // Get initial nav bar colors from conversation metadata
     [self setNavbarColorFromConversationMetadata:self.conversation.metadata];
-
-    // Set up Layer Client delegate and Layer Change Notification
-    self.layerClient.delegate = self;
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didReceiveLayerObjectsDidChangeNotification:) name:LYRClientObjectsDidChangeNotification object:self.layerClient];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -138,15 +139,6 @@
 }
 
 #pragma - IBActions
-
--(IBAction)openConsole:(id)sender
-{
-    // Open Console Window
-    ConsoleViewController *consoleViewController = [self.storyboard instantiateViewControllerWithIdentifier:@"ConsoleViewController"];
-    consoleViewController.layerClient = self.layerClient;
-    [self.navigationController pushViewController: consoleViewController animated:YES];
-}
-
 
 - (IBAction)sendMessageAction:(id)sender
 {
@@ -425,7 +417,7 @@
         id changeObject = [change objectForKey:LYRObjectChangeObjectKey];
         if ([[change objectForKey:LYRObjectChangeObjectKey] isKindOfClass:[LYRConversation class]]) {
             NSLog(@"Conversation Updated");
-            
+
             LYRConversation *changedConversation = (LYRConversation*)changeObject;
 
             // Get RBG for NavBar from metadata and change it's color
