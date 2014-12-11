@@ -190,9 +190,9 @@
     NSError *error;
     NSOrderedSet *messages = [self.layerClient executeQuery:query error:&error];
     if (!error) {
-        NSLog(@"messageFromRemoteNotification Fetched %tu messages", messages.count);
+        NSLog(@"Push Conversation contains %tu messages", messages.count);
     } else {
-        NSLog(@"messageFromRemoteNotification Query failed with error %@", error);
+        NSLog(@"Push Conversation Query failed with error %@", error);
     }
     return [messages firstObject];
 }

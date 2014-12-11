@@ -44,51 +44,14 @@
         NSLog(@"Query failed with error %@", error);
     }
     
-    if (conversations.count == 0) {
-        // If no conversations exist, create a new conversation object with a single participant
-        LYRConversation *conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID,kParticipant]] options:nil error:nil];
-        self.conversation = conversation;
-        [self logMessage:[NSString stringWithFormat:@"Creating First Conversation:%@",self.conversation.identifier]];
-    }
-    else
+    // Retrieve the last conversation
+    if (conversations.count != 0)
     {
-        LYRConversation *lastConversation = [conversations lastObject];
-        // Retrieve the last conversation
-        self.conversation = lastConversation;
+        self.conversation = [conversations lastObject];
         [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
-
-        // Housecleaning: There should never be more than 1 conversations between these 2 users.
-        // If not, delete every conversation except the last one.
-        for(LYRConversation *conversation in conversations)
-        {
-            if(conversation != lastConversation)
-            {
-                [conversation delete:LYRDeletionModeAllParticipants error:nil];
-            }
-        }
+        // setup query controller with messages from last conversation
+        [self setupQueryController];
     }
-    
-    // Retrieve all the messages in conversation
-    query = [LYRQuery queryWithClass:[LYRMessage class]];
-    query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
-    query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:NO]];
-
-    // Set up query controller
-    self.queryController = [self.layerClient queryControllerWithQuery:query];
-    self.queryController.delegate = self;
-    
-    BOOL success = [self.queryController execute:&error];
-    if (success) {
-        NSLog(@"Query fetched %tu message objects", [self.queryController numberOfObjectsInSection:0]);
-    } else {
-        NSLog(@"Query failed with error %@", error);
-    }
-    
-    // Mark all conversations as read on launch
-    [self.conversation markAllMessagesAsRead:nil];
-
-    // Get initial nav bar colors from conversation metadata
-    [self setNavbarColorFromConversationMetadata:self.conversation.metadata];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -151,6 +114,12 @@
 }
 
 - (void)sendMessage:(NSString*) messageText{
+
+    // If no conversations exist, create a new conversation object with a single participant
+    if(self.conversation == nil) {
+        LYRConversation *conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID,kParticipant]] options:nil error:nil];
+        self.conversation = conversation;
+    }
     
     // Creates a message part with text/plain MIME Type
     LYRMessagePart *messagePart = [LYRMessagePart messagePartWithText:messageText];
@@ -418,12 +387,10 @@
         if ([[change objectForKey:LYRObjectChangeObjectKey] isKindOfClass:[LYRConversation class]]) {
             NSLog(@"Conversation Updated");
 
-            LYRConversation *changedConversation = (LYRConversation*)changeObject;
-
-            // Get RBG for NavBar from metadata and change it's color
-            // Get initial nav bar colors from conversation metadata
-            [self setNavbarColorFromConversationMetadata:changedConversation.metadata];
-
+            // setup query controller with messages from updated conversation
+            self.conversation = (LYRConversation*)changeObject;
+            [self setupQueryController];
+            [self.tableView reloadData];
         }
         
         if ([[change objectForKey:LYRObjectChangeObjectKey]isKindOfClass:[LYRMessage class]]) {
@@ -438,6 +405,33 @@
     NSLog(@"MSG: %@",messageText);
     //    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:[NSString stringWithFormat:@"%@\n%@", self.textView.text, messageText] waitUntilDone:YES];
     
+}
+
+-(void) setupQueryController
+{
+    // Retrieve all the messages in conversation
+    LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
+    NSError *error;
+    
+    query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
+    query.sortDescriptors = @[ [NSSortDescriptor sortDescriptorWithKey:@"index" ascending:NO]];
+    
+    // Set up query controller
+    self.queryController = [self.layerClient queryControllerWithQuery:query];
+    self.queryController.delegate = self;
+    
+    BOOL success = [self.queryController execute:&error];
+    if (success) {
+        NSLog(@"Query fetched %tu message objects", [self.queryController numberOfObjectsInSection:0]);
+    } else {
+        NSLog(@"Query failed with error %@", error);
+    }
+    
+    // Mark all conversations as read on launch
+    [self.conversation markAllMessagesAsRead:nil];
+    
+    // Get initial nav bar colors from conversation metadata
+    [self setNavbarColorFromConversationMetadata:self.conversation.metadata];
 }
 
 - (UIColor *) getRandomColor
