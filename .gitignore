@@ -1,0 +1,9 @@
+Pods
+Podfile.lock
+.DS_Store
+*.bundle
+xcuserdata
+QuickStart.xcworkspace/xcuserdata/*.xcuserdatad/
+QuickStart.xcworkspace/xcshareddata/xcschemes/*.xcscheme
+QuickStart.xcworkspace/xcshareddata/LayerSample.xccheckout
+xcodebuild.log
