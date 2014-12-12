@@ -8,8 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		884A72D11A302EE00069F62C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72D01A302EE00069F62C /* main.m */; };
-		884A72D41A302EE00069F62C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72D31A302EE00069F62C /* AppDelegate.m */; };
-		884A72D71A302EE00069F62C /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72D61A302EE00069F62C /* ViewController.m */; };
+		884A72D41A302EE00069F62C /* LQSAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72D31A302EE00069F62C /* LQSAppDelegate.m */; };
+		884A72D71A302EE00069F62C /* LQSViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72D61A302EE00069F62C /* LQSViewController.m */; };
 		884A72DA1A302EE00069F62C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 884A72D81A302EE00069F62C /* Main.storyboard */; };
 		884A72DC1A302EE00069F62C /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 884A72DB1A302EE00069F62C /* Images.xcassets */; };
 		884A72DF1A302EE00069F62C /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 884A72DD1A302EE00069F62C /* LaunchScreen.xib */; };
@@ -21,6 +21,7 @@
 		88E81F361A3191200076423B /* message-delivered.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 88E81F331A3191200076423B /* message-delivered.jpg */; };
 		88E81F371A3191200076423B /* message-sent.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 88E81F341A3191200076423B /* message-sent.jpg */; };
 		96852B4A094C4E1444E747C4 /* libPods-QuickStart.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CC611513A36DC3FAA3D3503 /* libPods-QuickStart.a */; };
+		D6A3FC191A3B73C4004EFCFF /* LQSLayerClientDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D6A3FC181A3B73C4004EFCFF /* LQSLayerClientDelegate.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,10 +40,10 @@
 		884A72CB1A302EE00069F62C /* QuickStart.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuickStart.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		884A72CF1A302EE00069F62C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		884A72D01A302EE00069F62C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = main.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		884A72D21A302EE00069F62C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = AppDelegate.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		884A72D31A302EE00069F62C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = AppDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		884A72D51A302EE00069F62C /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = ViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
-		884A72D61A302EE00069F62C /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		884A72D21A302EE00069F62C /* LQSAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = LQSAppDelegate.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		884A72D31A302EE00069F62C /* LQSAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = LQSAppDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		884A72D51A302EE00069F62C /* LQSViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = LQSViewController.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		884A72D61A302EE00069F62C /* LQSViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = LQSViewController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		884A72D91A302EE00069F62C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		884A72DB1A302EE00069F62C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		884A72DE1A302EE00069F62C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
@@ -58,6 +59,8 @@
 		88E81F331A3191200076423B /* message-delivered.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "message-delivered.jpg"; sourceTree = "<group>"; };
 		88E81F341A3191200076423B /* message-sent.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "message-sent.jpg"; sourceTree = "<group>"; };
 		CF844DA0B549E45D5F7C9DCE /* Pods-QuickStart.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QuickStart.debug.xcconfig"; path = "Pods/Target Support Files/Pods-QuickStart/Pods-QuickStart.debug.xcconfig"; sourceTree = "<group>"; };
+		D6A3FC171A3B73C4004EFCFF /* LQSLayerClientDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LQSLayerClientDelegate.h; sourceTree = "<group>"; };
+		D6A3FC181A3B73C4004EFCFF /* LQSLayerClientDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LQSLayerClientDelegate.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -131,8 +134,10 @@
 				88E81FB01A38C5F20076423B /* Views */,
 				88E81FAF1A38C5D80076423B /* Utilities */,
 				88E81FAE1A38C59C0076423B /* Controllers */,
-				884A72D21A302EE00069F62C /* AppDelegate.h */,
-				884A72D31A302EE00069F62C /* AppDelegate.m */,
+				884A72D21A302EE00069F62C /* LQSAppDelegate.h */,
+				884A72D31A302EE00069F62C /* LQSAppDelegate.m */,
+				D6A3FC171A3B73C4004EFCFF /* LQSLayerClientDelegate.h */,
+				D6A3FC181A3B73C4004EFCFF /* LQSLayerClientDelegate.m */,
 				884A72D01A302EE00069F62C /* main.m */,
 				E92525F26042592ACA1D1904 /* Frameworks */,
 			);
@@ -156,8 +161,8 @@
 		88E81FAE1A38C59C0076423B /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				884A72D51A302EE00069F62C /* ViewController.h */,
-				884A72D61A302EE00069F62C /* ViewController.m */,
+				884A72D51A302EE00069F62C /* LQSViewController.h */,
+				884A72D61A302EE00069F62C /* LQSViewController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -337,8 +342,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				884A72F91A302F440069F62C /* ChatMessageCell.m in Sources */,
-				884A72D71A302EE00069F62C /* ViewController.m in Sources */,
-				884A72D41A302EE00069F62C /* AppDelegate.m in Sources */,
+				884A72D71A302EE00069F62C /* LQSViewController.m in Sources */,
+				884A72D41A302EE00069F62C /* LQSAppDelegate.m in Sources */,
+				D6A3FC191A3B73C4004EFCFF /* LQSLayerClientDelegate.m in Sources */,
 				884A72D11A302EE00069F62C /* main.m in Sources */,
 				88E81F311A318C7E0076423B /* Constants.m in Sources */,
 			);
@@ -468,6 +474,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Phone.ly, Inc.";
 				INFOPLIST_FILE = QuickStart/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "295179fe-779b-43dd-b02e-86a4900cdddb";
@@ -482,6 +489,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Phone.ly, Inc.";
 				INFOPLIST_FILE = QuickStart/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "295179fe-779b-43dd-b02e-86a4900cdddb";

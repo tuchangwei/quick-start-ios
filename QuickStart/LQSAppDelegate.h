@@ -9,9 +9,9 @@
 #import <UIKit/UIKit.h>
 #import <LayerKit/LayerKit.h>
 #import "Constants.h"
-#import "ViewController.h"
+#import "LQSViewController.h"
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface LQSAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
