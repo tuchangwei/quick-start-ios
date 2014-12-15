@@ -21,7 +21,7 @@ NSString * const kInitialMessage =  @"Hey Simul Ator, this is your friend, De Vi
 #endif
 
 // Your Layer App ID from developer.layer.com
-NSString * const kAppID = @"5a731a4c-63be-11e4-9124-aaa5020075f8";
+NSString * const kAppID = @"LAYER_APP_ID";
 
 NSString * const kPushMessageIdentifier = @"layer.message_identifier";
 

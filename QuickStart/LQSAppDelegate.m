@@ -297,7 +297,7 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
         [[NSUserDefaults standardUserDefaults] synchronize];
         // This is the first launch ever
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Hello!"
-                                                        message:@"Thisis a very simple example of a chat app using Layer. Launch this app on a Simulator and a Device to start a 1:1 conversation. If you shake the Device the navbar color will change on both the Simulator and Device."
+                                                        message:@"This is a very simple example of a chat app using Layer. Launch this app on a Simulator and a Device to start a 1:1 conversation. If you shake the Device the navbar color will change on both the Simulator and Device."
                                                        delegate:self
                                               cancelButtonTitle:nil
                                               otherButtonTitles:nil];
