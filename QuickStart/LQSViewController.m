@@ -12,7 +12,8 @@
 static NSDateFormatter *LQSDateFormatter()
 {
     static NSDateFormatter *dateFormatter;
-    if (!dateFormatter) {
+    if (!dateFormatter)
+    {
         dateFormatter = [[NSDateFormatter alloc] init];
         dateFormatter.dateFormat = @"HH:mm:ss";
     }
@@ -40,7 +41,7 @@ static NSDateFormatter *LQSDateFormatter()
     // Setup for Shake
     [self becomeFirstResponder];
     
-    self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Logo"]];
+    self.navigationItem.titleView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:kLogoImageName]];
     self.navigationItem.hidesBackButton = YES;
     
     self.inputTextView.delegate = self;
@@ -55,12 +56,14 @@ static NSDateFormatter *LQSDateFormatter()
 - (void)setupLayerNotificationObservers
 {
     // Register for Layer object change notifications
+    // For more information about Synchronization, check out https://developer.layer.com/docs/integration/ios#synchronization
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didReceiveLayerObjectsDidChangeNotification:)
                                                  name:LYRClientObjectsDidChangeNotification
                                                object:nil];
     
     // Register for typing indicator notifications
+    // For more information about Typing Indicators, check out https://developer.layer.com/docs/integration/ios#typing-indicator
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didReceiveTypingIndicator:)
                                                  name:LYRConversationDidReceiveTypingIndicatorNotification
@@ -72,15 +75,20 @@ static NSDateFormatter *LQSDateFormatter()
 - (void)fetchLayerConversation
 {
     // Fetches all conversations between the authenticated user and the supplied participant
+    // For more information about Querying, check out https://developer.layer.com/docs/integration/ios#querying
+    
     LYRQuery *query = [LYRQuery queryWithClass:[LYRConversation class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"participants" operator:LYRPredicateOperatorIsEqualTo value:@[kUserID, kParticipant]];
     query.sortDescriptors = @[[NSSortDescriptor sortDescriptorWithKey:@"createdAt" ascending:@(YES)]];
     
     NSError *error;
     NSOrderedSet *conversations = [self.layerClient executeQuery:query error:&error];
-    if (!error) {
+    if (!error)
+    {
         NSLog(@"%tu conversations with participants %@", conversations.count, @[kUserID, kParticipant]);
-    } else {
+    }
+    else
+    {
         NSLog(@"Query failed with error %@", error);
     }
     
@@ -88,7 +96,7 @@ static NSDateFormatter *LQSDateFormatter()
     if (conversations.count)
     {
         self.conversation = [conversations lastObject];
-        [self logMessage:[NSString stringWithFormat:@"Get last conversation object: %@",self.conversation.identifier]];
+        NSLog(@"Get last conversation object: %@",self.conversation.identifier);
         // setup query controller with messages from last conversation
         [self setupQueryController];
     }
@@ -96,6 +104,8 @@ static NSDateFormatter *LQSDateFormatter()
 
 -(void) setupQueryController
 {
+    // For more information about the Query Controller, check out https://developer.layer.com/docs/integration/ios#querying
+    
     // Query for all the messages in conversation sorted by index
     LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"conversation" operator:LYRPredicateOperatorIsEqualTo value:self.conversation];
@@ -107,9 +117,12 @@ static NSDateFormatter *LQSDateFormatter()
     
     NSError *error;
     BOOL success = [self.queryController execute:&error];
-    if (success) {
+    if (success)
+    {
         NSLog(@"Query fetched %tu message objects", [self.queryController numberOfObjectsInSection:0]);
-    } else {
+    }
+    else
+    {
         NSLog(@"Query failed with error: %@", error);
     }
     
@@ -128,11 +141,12 @@ static NSDateFormatter *LQSDateFormatter()
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     // Set up custom ChatMessageCell for displaying message
-    static NSString *simpleTableIdentifier = @"ChatMessageCell";
-    ChatMessageCell *cell = (ChatMessageCell *)[tableView dequeueReusableCellWithIdentifier:simpleTableIdentifier];
+    NSString *tableIdentifier = kChatMessageCell;
+    ChatMessageCell *cell = (ChatMessageCell *)[tableView dequeueReusableCellWithIdentifier:tableIdentifier];
     
-    if (cell == nil) {
-        NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ChatMessageCell" owner:self options:nil];
+    if (cell == nil)
+    {
+        NSArray *nib = [[NSBundle mainBundle] loadNibNamed:kChatMessageCell owner:self options:nil];
         cell = [nib objectAtIndex:0];
     }
     
@@ -154,21 +168,23 @@ static NSDateFormatter *LQSDateFormatter()
     cell.deviceLabel.text = message.sentByUserID;
     
     // If the message was sent by current user, show Receipent Status Indicators
-    if ([message.sentByUserID isEqualToString:kUserID]) {
+    if ([message.sentByUserID isEqualToString:kUserID])
+    {
         
-        switch ([message recipientStatusForUserID:kParticipant]) {
+        switch ([message recipientStatusForUserID:kParticipant])
+        {
             case LYRRecipientStatusSent:
-                [cell.messageStatus setImage:[UIImage imageNamed:@"message-sent.jpg"]];
+                [cell.messageStatus setImage:[UIImage imageNamed:kMessageSentImageName]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[LQSDateFormatter() stringFromDate:message.sentAt]];
                 break;
                 
             case LYRRecipientStatusDelivered:
-                [cell.messageStatus setImage:[UIImage imageNamed:@"message-delivered.jpg"]];
+                [cell.messageStatus setImage:[UIImage imageNamed:kMessageDeliveredImageName]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Delivered: %@",[LQSDateFormatter() stringFromDate:message.sentAt]];
                 break;
                 
             case LYRRecipientStatusRead:
-                [cell.messageStatus setImage:[UIImage imageNamed:@"message-read.jpg"]];
+                [cell.messageStatus setImage:[UIImage imageNamed:kMessageReadImageName]];
                 cell.timestampLabel.text = [NSString stringWithFormat:@"Read: %@",[LQSDateFormatter()  stringFromDate:message.receivedAt]];
                 break;
                 
@@ -179,7 +195,9 @@ static NSDateFormatter *LQSDateFormatter()
             default:
                 break;
         }
-    } else {
+    }
+    else
+    {
         cell.timestampLabel.text = [NSString stringWithFormat:@"Sent: %@",[LQSDateFormatter() stringFromDate:message.sentAt]];
     }
 }
@@ -193,14 +211,18 @@ static NSDateFormatter *LQSDateFormatter()
 
 - (void)didReceiveTypingIndicator:(NSNotification *)notification
 {
+    // For more information about Typing Indicators, check out https://developer.layer.com/docs/integration/ios#typing-indicator
+    
     NSString *participantID = notification.userInfo[LYRTypingIndicatorParticipantUserInfoKey];
     LYRTypingIndicator typingIndicator = [notification.userInfo[LYRTypingIndicatorValueUserInfoKey] unsignedIntegerValue];
     
-    if (typingIndicator == LYRTypingDidBegin) {
+    if (typingIndicator == LYRTypingDidBegin)
+    {
         self.typingIndicatorLabel.alpha = 1;
         self.typingIndicatorLabel.text = [NSString stringWithFormat:@"%@ is typing...",participantID];
     }
-    else {
+    else
+    {
         self.typingIndicatorLabel.alpha = 0;
         self.typingIndicatorLabel.text = @"";
     }
@@ -214,17 +236,26 @@ static NSDateFormatter *LQSDateFormatter()
     [self sendMessage:self.inputTextView.text];
     
     // Lower the keyboard
-    [self setViewMovedUp:NO];
+    [self moveViewUpToShowKeyboard:NO];
     [self.inputTextView resignFirstResponder];
 }
 
 - (void)sendMessage:(NSString*) messageText{
 
+    // Send a Message
+    // See "Quick Start - Send a Message" for more details
+    // https://developer.layer.com/docs/quick-start/ios#send-a-message
+    
     // If no conversations exist, create a new conversation object with a single participant
-    if(!self.conversation) {
+    if(!self.conversation)
+    {
         
-        //TODO - ADD ERROR INSPECTION
-        self.conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID, kParticipant]] options:nil error:nil];
+        NSError *error;
+        self.conversation = [self.layerClient newConversationWithParticipants:[NSSet setWithArray:@[kUserID, kParticipant]] options:nil error:&error];
+        if(error)
+        {
+            NSLog(@"New Conversation creation failed: %@", error);
+        }
         
     }
     
@@ -237,15 +268,18 @@ static NSDateFormatter *LQSDateFormatter()
     // Sends the specified message
     NSError *error;
     BOOL success = [self.conversation sendMessage:message error:&error];
-    if (success) {
+    if (success)
+    {
         // If the message was sent by the participant, show the sentAt time and mark the message as read
-        [self logMessage:[NSString stringWithFormat: @"Message queued to be sent: %@", messageText]];
-    } else {
-        [self logMessage:[NSString stringWithFormat: @"Message send failed: %@", error]];
+        NSLog(@"Message queued to be sent: %@", messageText);
+    }
+    else
+    {
+        NSLog(@"Message send failed: %@", error);
     }
 }
 
-#pragma - Set up for Shake
+#pragma - mark Set up for Shake
 
 -(BOOL)canBecomeFirstResponder
 {
@@ -262,14 +296,14 @@ static NSDateFormatter *LQSDateFormatter()
 
         CGFloat redFloat = 0.0, greenFloat = 0.0, blueFloat = 0.0, alpha =0.0;
         [newNavBarBackgroundColor getRed:&redFloat green:&greenFloat blue:&blueFloat alpha:&alpha];
-        
-        // TODO Make these constants
-//         NSDictionary *metadata = @{@"backgroundColor" : @{
-//                                            @"red" : [[NSNumber numberWithFloat:redFloat] stringValue],
-//                                            @"green" : [[NSNumber numberWithFloat:greenFloat] stringValue],
-//                                            @"blue" : [[NSNumber numberWithFloat:blueFloat] stringValue]}
-//                                    };
-//        [self.conversation setValuesForMetadataKeyPathsWithDictionary:metadata merge:YES];
+
+        // For more information about Metadata, check out https://developer.layer.com/docs/integration/ios#metadata
+        NSDictionary *metadata = @{kBackgroundColorMetadataKey : @{
+                                            kRedBackgroundColor : [[NSNumber numberWithFloat:redFloat] stringValue],
+                                            kGreenBackgroundColor : [[NSNumber numberWithFloat:greenFloat] stringValue],
+                                            kBlueBackgroundColor : [[NSNumber numberWithFloat:blueFloat] stringValue]}
+                                    };
+        [self.conversation setValuesForMetadataKeyPathsWithDictionary:metadata merge:YES];
     }
 }
 
@@ -277,9 +311,11 @@ static NSDateFormatter *LQSDateFormatter()
 
 - (void)textViewDidBeginEditing:(UITextView *)textView
 {
+    // For more information about Typing Indicators, check out https://developer.layer.com/docs/integration/ios#typing-indicator
+    
     // Sends a typing indicator event to the given conversation.
     [self.conversation sendTypingIndicator:LYRTypingDidBegin];
-    [self setViewMovedUp:YES];
+    [self moveViewUpToShowKeyboard:YES];
 }
 
 - (void)textViewDidEndEditing:(UITextView *)textView
@@ -289,19 +325,21 @@ static NSDateFormatter *LQSDateFormatter()
 }
 
 // Move up the view when the keyboard is shown
-- (void)setViewMovedUp:(BOOL)movedUp
+- (void)moveViewUpToShowKeyboard:(BOOL)movedUp
 {
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationDuration:0.3];
 
     CGRect rect = self.view.frame;
-    if (movedUp){
+    if (movedUp)
+    {
         if(rect.origin.y == 0)
-            rect.origin.y = self.view.frame.origin.y - 255;
+            rect.origin.y = self.view.frame.origin.y - kKeyBoardHeight;
     }
-    else{
+    else
+    {
         if(rect.origin.y < 0)
-            rect.origin.y = self.view.frame.origin.y + 255;
+            rect.origin.y = self.view.frame.origin.y + kKeyBoardHeight;
     }
     self.view.frame = rect;
     [UIView commitAnimations];
@@ -310,9 +348,10 @@ static NSDateFormatter *LQSDateFormatter()
 // If the user hits Return then dismiss the keyboard and move the view back down
 -(BOOL)textView:(UITextView *)textView shouldChangeTextInRange:(NSRange)range replacementText:(NSString *)text
 {
-    if([text isEqualToString:@"\n"]) {
+    if([text isEqualToString:@"\n"])
+    {
         [self.inputTextView resignFirstResponder];
-        [self setViewMovedUp:NO];
+        [self moveViewUpToShowKeyboard:NO];
         return NO;
     }
     return YES;
@@ -361,11 +400,25 @@ static NSDateFormatter *LQSDateFormatter()
     [self.tableView endUpdates];
 }
 
+#pragma - mark LYRQueryControllerDelegate Delegate Methods
+
+- (void)didReceiveLayerClientWillBeginSynchronizationNotification:(NSNotification *)notification
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
+}
+
+- (void)didReceiveLayerClientDidFinishSynchronizationNotification:(NSNotification *)notification
+{
+    [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
+}
+
 #pragma mark - Layer Object Change Notification Handler
 
 - (void) didReceiveLayerObjectsDidChangeNotification:(NSNotification *)notification;
 {
-    if (!self.conversation) {
+    // For more information about Synchronization, check out https://developer.layer.com/docs/integration/ios#synchronization
+    if (!self.conversation)
+    {
         [self fetchLayerConversation];
         [self setupQueryController];
         [self.tableView reloadData];
@@ -375,12 +428,6 @@ static NSDateFormatter *LQSDateFormatter()
 }
 
 #pragma - mark General Helper Methods
-
-- (void)logMessage:(NSString*) messageText{
-    NSLog(@"MSG: %@",messageText);
-    //    [self.textView performSelectorOnMainThread:@selector(setText:) withObject:[NSString stringWithFormat:@"%@\n%@", self.textView.text, messageText] waitUntilDone:YES];
-    
-}
 
 - (UIColor *) getRandomColor
 {
@@ -396,10 +443,11 @@ static NSDateFormatter *LQSDateFormatter()
 
 -(void) setNavbarColorFromConversationMetadata:(NSDictionary *)metadata
 {
-    if (![metadata valueForKey:@"backgroundColor"]) return;
-    float redColor = (float)[[metadata valueForKeyPath:@"backgroundColor.red"] floatValue];
-    float blueColor = (float)[[metadata valueForKeyPath:@"backgroundColor.blue"] floatValue];
-    float greenColor = (float)[[metadata valueForKeyPath:@"backgroundColor.green"] floatValue];
+    // For more information about Metadata, check out https://developer.layer.com/docs/integration/ios#metadata
+    if (![metadata valueForKey:kBackgroundColorMetadataKey]) return;
+    float redColor = (float)[[metadata valueForKeyPath:kRedBackgroundColorMetadataKeyPath] floatValue];
+    float blueColor = (float)[[metadata valueForKeyPath:kBlueBackgroundColorMetadataKeyPath] floatValue];
+    float greenColor = (float)[[metadata valueForKeyPath:kGreenBackgroundColorMetadataKeyPath] floatValue];
     self.navigationController.navigationBar.barTintColor = [UIColor colorWithRed:redColor
                                                                            green:greenColor
                                                                             blue:blueColor
