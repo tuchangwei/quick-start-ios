@@ -1,11 +1,19 @@
-# quick-start-ios
+# Layer QuickStart for iOS
 
 **Example code for integrating [LayerKit](https://layer.com/).**
 
 QuickStart is a sample application highlighting how to integrate LayerKit, the iOS SDK for the Layer communications platform. It presents a very simple example of a chat app using Layer.
 
+## Requirements
+
+The QuickStart application requires Xcode and the iOS SDK v8.0. Dependencies are managed via [CocoaPods](http://cocoapods.org/) to simplify installation.
+
 ## Usage
-* Launch this app on a Simulator and a Device to start a 1:1 conversation between them.
+
+* Clone the project from Github: `$ git clone https://github.com/layerhq/quick-start-ios.git`
+* Install the dependencies via CocoaPods: `$ pod install`
+* Open `QuickStart.xcworkspace` in Xcode.
+* Build and run the QuickStart application on a Simulator and a physical Device to start a 1:1 conversation between them.
 * If you shake the Device the navbar color will change on both the Simulator and Device.
 
 ## Highlights
