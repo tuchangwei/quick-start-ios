@@ -6,9 +6,28 @@
 //  Copyright (c) 2014 Layer, Inc. All rights reserved.
 //
 
+#import <LayerKit/LayerKit.h>
+#import "LQSViewController.h"
 #import "LQSAppDelegate.h"
 
-@interface LQSAppDelegate ()
+/**
+ Layer App ID from developer.layer.com
+ */
+static NSString *const LQSLayerAppIDString = @"4ecc1f16-0c5e-11e4-ac3e-276b00000a10";
+
+#if TARGET_IPHONE_SIMULATOR
+    // If on simulator set the user ID to Simulator and participant to Device
+    NSString *const LQSCurrentUserID = @"Simulator";
+    NSString *const LQSParticipantUserID = @"Device";
+    NSString *const LQSInitialMessageText = @"Hey Device! This is your friend, Simulator.";
+#else
+    // If on device set the user ID to Device and participant to Simulator
+    NSString *const LQSCurrentUserID = @"Device";
+    NSString *const LQSParticipantUserID = @"Simulator";
+    NSString *const LQSInitialMessageText =  @"Hey Simulator! This is your friend, Device.";
+#endif
+
+@interface LQSAppDelegate () <LYRClientDelegate>
 
 @property (nonatomic) LYRClient *layerClient;
 
@@ -16,11 +35,8 @@
 
 @implementation LQSAppDelegate
 
-static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce";
-
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    
     // Add support for shake gesture
     application.applicationSupportsShakeToEdit = YES;
     
@@ -28,25 +44,19 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
     [self showFirstTimeMessage];
     
     // Initializes a LYRClient object
-    NSUUID *appID = [[NSUUID alloc] initWithUUIDString:kAppID];
+    NSUUID *appID = [[NSUUID alloc] initWithUUIDString:LQSLayerAppIDString];
     self.layerClient = [LYRClient clientWithAppID:appID];
     self.layerClient.delegate = self;
     
     // Connect to Layer
     // See "Quick Start - Connect" for more details
     // https://developer.layer.com/docs/quick-start/ios#connect
-    [self.layerClient connectWithCompletion:^(BOOL success, NSError *error)
-    {
-        if (!success)
-        {
+    [self.layerClient connectWithCompletion:^(BOOL success, NSError *error) {
+        if (!success) {
             NSLog(@"Failed to connect to Layer: %@", error);
-        }
-        else
-        {
-            [self authenticateLayerWithUserID:kUserID completion:^(BOOL success, NSError *error)
-            {
-                if (!success)
-                {
+        } else {
+            [self authenticateLayerWithUserID:LQSCurrentUserID completion:^(BOOL success, NSError *error) {
+                if (!success) {
                     NSLog(@"Failed Authenticating Layer Client with error:%@", error);
                 }
             }];
@@ -71,18 +81,15 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
     // https://developer.layer.com/docs/guides/ios#push-notification
     
     // Checking if app is running iOS 8
-    if ([application respondsToSelector:@selector(registerForRemoteNotifications)])
-    {
+    if ([application respondsToSelector:@selector(registerForRemoteNotifications)]) {
         // Register device for iOS8
         UIUserNotificationSettings *notificationSettings = [UIUserNotificationSettings settingsForTypes:UIUserNotificationTypeAlert | UIUserNotificationTypeBadge | UIUserNotificationTypeSound categories:nil];
         [application registerUserNotificationSettings:notificationSettings];
         [application registerForRemoteNotifications];
-    } else
-    {
+    } else {
         // Register device for iOS7
         [application registerForRemoteNotificationTypes:UIRemoteNotificationTypeAlert | UIRemoteNotificationTypeSound | UIRemoteNotificationTypeBadge];
     }
-
 }
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
@@ -92,12 +99,9 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
     // https://developer.layer.com/docs/guides/ios#push-notification
     NSError *error;
     BOOL success = [self.layerClient updateRemoteNotificationDeviceToken:deviceToken error:&error];
-    if (success)
-    {
+    if (success) {
         NSLog(@"Application did register for remote notifications.");
-    }
-    else
-    {
+    } else {
         NSLog(@"Failed updating device token with error: %@", error);
     }
 }
@@ -105,31 +109,26 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
 - (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
     // Increment badge count if a message
-    if ([[userInfo valueForKeyPath:@"aps.content-available"] integerValue] != 0)
-    {
+    if ([[userInfo valueForKeyPath:@"aps.content-available"] integerValue] != 0) {
         NSInteger badgeNumber = [[UIApplication sharedApplication] applicationIconBadgeNumber];
         [[UIApplication sharedApplication] setApplicationIconBadgeNumber:badgeNumber + 1];
     }
 
-    //Get Message from Metadata
+    // Get Message from Metadata
     __block LYRMessage *message = [self messageFromRemoteNotification:userInfo];
     
     NSError *error;
-    BOOL success = [self.layerClient synchronizeWithRemoteNotification:userInfo completion:^(UIBackgroundFetchResult fetchResult, NSError *error)
-    {
-        if (fetchResult == UIBackgroundFetchResultFailed)
-        {
+    BOOL success = [self.layerClient synchronizeWithRemoteNotification:userInfo completion:^(UIBackgroundFetchResult fetchResult, NSError *error) {
+        if (fetchResult == UIBackgroundFetchResultFailed) {
             NSLog(@"Failed processing remote notification: %@", error);
         }
         message = [self messageFromRemoteNotification:userInfo];
         completionHandler(fetchResult);
     }];
-    if (success)
-    {
+    
+    if (success) {
         NSLog(@"Application did complete remote notification sync");
-    }
-    else
-    {
+    } else {
         NSLog(@"Failed processing push notification with error: %@", error);
         completionHandler(UIBackgroundFetchResultNoData);
     }
@@ -137,21 +136,20 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
 
 - (LYRMessage *)messageFromRemoteNotification:(NSDictionary *)remoteNotification
 {
-    // Retrieve message URL from Push Notification
-    NSURL *messageURL = [NSURL URLWithString:[remoteNotification valueForKeyPath:kPushMessageIdentifier]];
+    static NSString *const LQSPushMessageIdentifierKeyPath = @"layer.message_identifier";
     
-    //Retrieve LYRMessage from Message URL
+    // Retrieve message URL from Push Notification
+    NSURL *messageURL = [NSURL URLWithString:[remoteNotification valueForKeyPath:LQSPushMessageIdentifierKeyPath]];
+    
+    // Retrieve LYRMessage from Message URL
     LYRQuery *query = [LYRQuery queryWithClass:[LYRMessage class]];
     query.predicate = [LYRPredicate predicateWithProperty:@"identifier" operator:LYRPredicateOperatorIsIn value:[NSSet setWithObject:messageURL]];
     
     NSError *error;
     NSOrderedSet *messages = [self.layerClient executeQuery:query error:&error];
-    if (!error)
-    {
+    if (!error) {
         NSLog(@"Query contains %lu messages", (unsigned long)messages.count);
-    }
-    else
-    {
+    } else {
         NSLog(@"Query failed with error %@", error);
     }
     return [messages firstObject];
@@ -161,8 +159,7 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
 
 - (void)authenticateLayerWithUserID:(NSString *)userID completion:(void (^)(BOOL success, NSError * error))completion
 {
-    if (self.layerClient.authenticatedUserID)
-    {
+    if (self.layerClient.authenticatedUserID) {
         NSLog(@"Layer Authenticated as User %@", self.layerClient.authenticatedUserID);
         if (completion) completion(YES, nil);
         return;
@@ -175,36 +172,35 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
     /*
      * 1. Request an authentication Nonce from Layer
      */
-    [self.layerClient requestAuthenticationNonceWithCompletion:^(NSString *nonce, NSError *error)
-    {
-        if (!nonce)
-        {
-            if (completion) completion(NO, error);
-            return ;
+    [self.layerClient requestAuthenticationNonceWithCompletion:^(NSString *nonce, NSError *error) {
+        if (!nonce) {
+            if (completion) {
+                completion(NO, error);
+            }
+            return;
         }
         
         /*
          * 2. Acquire identity Token from Layer Identity Service
          */
-        [self requestIdentityTokenForUserID:userID appID:[self.layerClient.appID UUIDString] nonce:nonce completion:^(NSString *identityToken, NSError *error)
-        {
-            if (!identityToken)
-            {
-                if (completion) completion(NO, error);
-                return ;
+        [self requestIdentityTokenForUserID:userID appID:[self.layerClient.appID UUIDString] nonce:nonce completion:^(NSString *identityToken, NSError *error) {
+            if (!identityToken) {
+                if (completion) {
+                    completion(NO, error);
+                }
+                return;
             }
+            
             /*
              * 3. Submit identity token to Layer for validation
              */
-            [self.layerClient authenticateWithIdentityToken:identityToken completion:^(NSString *authenticatedUserID, NSError *error)
-            {
-                if (authenticatedUserID)
-                {
-                    if (completion) completion(YES, nil);
+            [self.layerClient authenticateWithIdentityToken:identityToken completion:^(NSString *authenticatedUserID, NSError *error) {
+                if (authenticatedUserID) {
+                    if (completion) {
+                        completion(YES, nil);
+                    }
                     NSLog(@"Layer Authenticated as User: %@", authenticatedUserID);
-                }
-                else
-                {
+                } else {
                     completion(NO, error);
                 }
             }];
@@ -214,6 +210,11 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
 
 - (void)requestIdentityTokenForUserID:(NSString *)userID appID:(NSString *)appID nonce:(NSString *)nonce completion:(void(^)(NSString *identityToken, NSError *error))completion
 {
+    NSParameterAssert(userID);
+    NSParameterAssert(appID);
+    NSParameterAssert(nonce);
+    NSParameterAssert(completion);
+    
     NSURL *identityTokenURL = [NSURL URLWithString:@"https://layer-identity-provider.herokuapp.com/identity_tokens"];
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:identityTokenURL];
     request.HTTPMethod = @"POST";
@@ -226,12 +227,12 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
     
     NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration ephemeralSessionConfiguration];
     NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
-    [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error)
-    {
-        if (error)
-        {
+    [[session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+        if (error) {
             completion(nil, error);
+            return;
         }
+        
         // Deserialize the response
         NSDictionary *responseObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
         NSString *identityToken = responseObject[@"identity_token"];
@@ -291,10 +292,12 @@ static NSString *const ApplicationHasLaunchedOnce = @"applicationHasLaunchedOnce
 
 - (void)showFirstTimeMessage;
 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:ApplicationHasLaunchedOnce])
-    {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:ApplicationHasLaunchedOnce];
+    static NSString *const LQSApplicationHasLaunchedOnceDefaultsKey = @"applicationHasLaunchedOnce";
+    
+    if (![[NSUserDefaults standardUserDefaults] boolForKey:LQSApplicationHasLaunchedOnceDefaultsKey]) {
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:LQSApplicationHasLaunchedOnceDefaultsKey];
         [[NSUserDefaults standardUserDefaults] synchronize];
+        
         // This is the first launch ever
         UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Hello!"
                                                         message:@"This is a very simple example of a chat app using Layer. Launch this app on a Simulator and a Device to start a 1:1 conversation. If you shake the Device the navbar color will change on both the Simulator and Device."

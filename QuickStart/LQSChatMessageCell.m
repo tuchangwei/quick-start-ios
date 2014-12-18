@@ -6,9 +6,9 @@
 //  Copyright (c) 2014 Layer, Inc. All rights reserved.
 //
 
-#import "ChatMessageCell.h"
+#import "LQSChatMessageCell.h"
 
-@implementation ChatMessageCell
+@implementation LQSChatMessageCell
 
 - (void)awakeFromNib {
     // Initialization code

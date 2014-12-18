@@ -7,13 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <LayerKit/LayerKit.h>
-#import "Constants.h"
-#import "LQSViewController.h"
 
-@interface LQSAppDelegate : UIResponder <UIApplicationDelegate,LYRClientDelegate>
+@interface LQSAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 
 @end
-

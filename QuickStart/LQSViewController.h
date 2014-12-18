@@ -8,7 +8,6 @@
 
 #import <UIKit/UIKit.h>
 #import <LayerKit/LayerKit.h>
-#import "Constants.h"
 
 @interface LQSViewController : UIViewController
 
@@ -20,4 +19,3 @@
 @property (nonatomic, weak) IBOutlet UILabel *typingIndicatorLabel;
 
 @end
-

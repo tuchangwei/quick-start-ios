@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ChatMessageCell : UITableViewCell
+@interface LQSChatMessageCell : UITableViewCell
 
 @property (nonatomic, weak) IBOutlet UILabel *deviceLabel;
 @property (nonatomic, weak) IBOutlet UILabel *timestampLabel;
