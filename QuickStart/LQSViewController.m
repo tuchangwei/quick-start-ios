@@ -24,9 +24,9 @@ static NSString *const LQSBlueBackgroundColor = @"blue";
 static NSString *const LQSGreenBackgroundColor = @"green";
 
 // Message State Images
-static NSString *const LQSMessageSentImageName = @"message-sent.jpg";
-static NSString *const LQSMessageDeliveredImageName =@"message-delivered.jpg";
-static NSString *const LQSMessageReadImageName =@"message-read.jpg";
+static NSString *const LQSMessageSentImageName = @"message-sent";
+static NSString *const LQSMessageDeliveredImageName =@"message-delivered";
+static NSString *const LQSMessageReadImageName =@"message-read";
 
 static NSString *const LQSChatMessageCellReuseIdentifier = @"ChatMessageCell";
 

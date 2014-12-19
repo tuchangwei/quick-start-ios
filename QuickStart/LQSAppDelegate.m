@@ -13,7 +13,7 @@
 /**
  Layer App ID from developer.layer.com
  */
-static NSString *const LQSLayerAppIDString = @"4ecc1f16-0c5e-11e4-ac3e-276b00000a10";
+static NSString *const LQSLayerAppIDString = @"LAYER_APP_ID";
 
 #if TARGET_IPHONE_SIMULATOR
     // If on simulator set the user ID to Simulator and participant to Device
@@ -37,38 +37,41 @@ static NSString *const LQSLayerAppIDString = @"4ecc1f16-0c5e-11e4-ac3e-276b00000
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    // Add support for shake gesture
-    application.applicationSupportsShakeToEdit = YES;
-    
-    //Show a usage the first time the app is launched
-    [self showFirstTimeMessage];
-    
-    // Initializes a LYRClient object
-    NSUUID *appID = [[NSUUID alloc] initWithUUIDString:LQSLayerAppIDString];
-    self.layerClient = [LYRClient clientWithAppID:appID];
-    self.layerClient.delegate = self;
-    
-    // Connect to Layer
-    // See "Quick Start - Connect" for more details
-    // https://developer.layer.com/docs/quick-start/ios#connect
-    [self.layerClient connectWithCompletion:^(BOOL success, NSError *error) {
-        if (!success) {
-            NSLog(@"Failed to connect to Layer: %@", error);
-        } else {
-            [self authenticateLayerWithUserID:LQSCurrentUserID completion:^(BOOL success, NSError *error) {
-                if (!success) {
-                    NSLog(@"Failed Authenticating Layer Client with error:%@", error);
-                }
-            }];
-        }
-    }];
-    
-    // Register for push
-    [self registerApplicationForPushNotifications:application];
-    
-    UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
-    [(LQSViewController *)navigationController.topViewController setLayerClient:self.layerClient];
-    
+    // Check if Sample App is using a valid app ID.
+    if([self isValidAppID])
+    {
+        // Add support for shake gesture
+        application.applicationSupportsShakeToEdit = YES;
+        
+        //Show a usage the first time the app is launched
+        [self showFirstTimeMessage];
+        
+        // Initializes a LYRClient object
+        NSUUID *appID = [[NSUUID alloc] initWithUUIDString:LQSLayerAppIDString];
+        self.layerClient = [LYRClient clientWithAppID:appID];
+        self.layerClient.delegate = self;
+        
+        // Connect to Layer
+        // See "Quick Start - Connect" for more details
+        // https://developer.layer.com/docs/quick-start/ios#connect
+        [self.layerClient connectWithCompletion:^(BOOL success, NSError *error) {
+            if (!success) {
+                NSLog(@"Failed to connect to Layer: %@", error);
+            } else {
+                [self authenticateLayerWithUserID:LQSCurrentUserID completion:^(BOOL success, NSError *error) {
+                    if (!success) {
+                        NSLog(@"Failed Authenticating Layer Client with error:%@", error);
+                    }
+                }];
+            }
+        }];
+        
+        // Register for push
+        [self registerApplicationForPushNotifications:application];
+        
+        UINavigationController *navigationController = (UINavigationController *)self.window.rootViewController;
+        [(LQSViewController *)navigationController.topViewController setLayerClient:self.layerClient];
+    }
     return YES;
 }
 
@@ -306,6 +309,31 @@ static NSString *const LQSLayerAppIDString = @"4ecc1f16-0c5e-11e4-ac3e-276b00000
                                               otherButtonTitles:nil];
         [alert addButtonWithTitle:@"Got It!"];
         [alert show];
+    }
+}
+
+#pragma mark - Check if Sample App is using a valid app ID.
+
+- (BOOL) isValidAppID
+{
+    if([LQSLayerAppIDString isEqual: @"LAYER_APP_ID"])
+    {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"\xF0\x9F\x98\xA5"
+                                                        message:@"To correctly use this project you need to replace LAYER_APP_ID in LQSAppDelegate.m (line 16) with your App ID from developer.layer.com."
+                                                       delegate:self
+                                              cancelButtonTitle:nil
+                                              otherButtonTitles:nil];
+        [alert addButtonWithTitle:@"Ok"];
+        [alert show];
+        return NO;
+    }
+    return YES;
+}
+
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
+    if ([[alertView buttonTitleAtIndex:buttonIndex] isEqualToString:@"Ok"])
+    {
+        abort();
     }
 }
 

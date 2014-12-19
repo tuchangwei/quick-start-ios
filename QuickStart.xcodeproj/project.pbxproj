@@ -15,9 +15,6 @@
 		884A72DF1A302EE00069F62C /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 884A72DD1A302EE00069F62C /* LaunchScreen.xib */; };
 		884A72EB1A302EE00069F62C /* QuickStartTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72EA1A302EE00069F62C /* QuickStartTests.m */; };
 		884A72F91A302F440069F62C /* LQSChatMessageCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 884A72F81A302F440069F62C /* LQSChatMessageCell.m */; };
-		88E81F351A3191200076423B /* message-read.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 88E81F321A3191200076423B /* message-read.jpg */; };
-		88E81F361A3191200076423B /* message-delivered.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 88E81F331A3191200076423B /* message-delivered.jpg */; };
-		88E81F371A3191200076423B /* message-sent.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 88E81F341A3191200076423B /* message-sent.jpg */; };
 		96852B4A094C4E1444E747C4 /* libPods-QuickStart.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CC611513A36DC3FAA3D3503 /* libPods-QuickStart.a */; };
 /* End PBXBuildFile section */
 
@@ -49,9 +46,6 @@
 		884A72EA1A302EE00069F62C /* QuickStartTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = QuickStartTests.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		884A72F71A302F440069F62C /* LQSChatMessageCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = LQSChatMessageCell.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		884A72F81A302F440069F62C /* LQSChatMessageCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = LQSChatMessageCell.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
-		88E81F321A3191200076423B /* message-read.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "message-read.jpg"; sourceTree = "<group>"; };
-		88E81F331A3191200076423B /* message-delivered.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "message-delivered.jpg"; sourceTree = "<group>"; };
-		88E81F341A3191200076423B /* message-sent.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "message-sent.jpg"; sourceTree = "<group>"; };
 		CF844DA0B549E45D5F7C9DCE /* Pods-QuickStart.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-QuickStart.debug.xcconfig"; path = "Pods/Target Support Files/Pods-QuickStart/Pods-QuickStart.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -139,9 +133,6 @@
 			children = (
 				884A72CF1A302EE00069F62C /* Info.plist */,
 				884A72DB1A302EE00069F62C /* Images.xcassets */,
-				88E81F321A3191200076423B /* message-read.jpg */,
-				88E81F331A3191200076423B /* message-delivered.jpg */,
-				88E81F341A3191200076423B /* message-sent.jpg */,
 			);
 			name = Resources;
 			path = QuickStart;
@@ -264,11 +255,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				88E81F351A3191200076423B /* message-read.jpg in Resources */,
-				88E81F371A3191200076423B /* message-sent.jpg in Resources */,
 				884A72DA1A302EE00069F62C /* Main.storyboard in Resources */,
 				884A72DF1A302EE00069F62C /* LaunchScreen.xib in Resources */,
-				88E81F361A3191200076423B /* message-delivered.jpg in Resources */,
 				884A72DC1A302EE00069F62C /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
