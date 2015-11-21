@@ -526,8 +526,8 @@ static UIColor *LSRandomColor(void)
 
 -(void)scrollToBottom{
     NSUInteger messages = [self numberOfMessages];
-    
-    if(self.conversation && messages > 0)
+    NSInteger rows = [self.queryController numberOfObjectsInSection:0];
+    if(self.conversation && messages > 0 && rows > 0)
     {
         NSIndexPath* ip = [NSIndexPath indexPathForRow:[self.tableView numberOfRowsInSection:0] - 1 inSection:0];
         [self.tableView scrollToRowAtIndexPath:ip atScrollPosition:UITableViewScrollPositionTop animated:YES];
