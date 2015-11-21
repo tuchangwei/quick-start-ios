@@ -161,7 +161,7 @@ static UIColor *LSRandomColor(void)
     
     // Retrieve the last conversation
     if (conversations.count) {
-        self.conversation = [conversations lastObject];
+        self.conversation = [conversations firstObject];
         NSLog(@"Get last conversation object: %@",self.conversation.identifier);
         //[self.conversation delete:LYRDeletionModeAllParticipants error:nil];
         
