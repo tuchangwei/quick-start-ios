@@ -518,6 +518,7 @@ static UIColor *LSRandomColor(void)
 - (void)didReceiveLayerObjectsDidChangeNotification:(NSNotification *)notification;
 {
     // Get nav bar colors from conversation metadata
+     NSLog(@"The conversation's meta data is:%@",self.conversation.metadata);
     [self setNavbarColorFromConversationMetadata:self.conversation.metadata];
     [self fetchLayerConversation];
 }
@@ -598,30 +599,31 @@ static UIColor *LSRandomColor(void)
 {
     
     
-    LYRQuery *message = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
+    // LYRQuery *message = [LYRQuery queryWithQueryableClass:[LYRMessage class]];
     
-    NSError *error;
-    NSOrderedSet *messageList = [self.layerClient executeQuery:message error:&error];
+    // NSError *error;
+    // NSOrderedSet *messageList = [self.layerClient executeQuery:message error:&error];
     
     
     
-    if ([messageList count] > 0)
-    {
+    // if ([messageList count] > 0)
+    // {
         
-        for (int i = 0; i < [messageList count];  i++)
-        {
-            LYRMessage *message = [messageList objectAtIndex:i];
-            bool success = [message delete:LYRDeletionModeAllParticipants error:&error];
-            NSLog(@"Message is: %@", message.parts);
+    //     for (int i = 0; i < [messageList count];  i++)
+    //     {
+    //         LYRMessage *message = [messageList objectAtIndex:i];
+    //         bool success = [message delete:LYRDeletionModeAllParticipants error:&error];
+    //         NSLog(@"Message is: %@", message.parts);
             
-            if (success) {
-                NSLog(@"The message has been delted");
-            }else {
-                NSLog(@"Error");
-            }
-        }
+    //         if (success) {
+    //             NSLog(@"The message has been delted");
+    //         }else {
+    //             NSLog(@"Error");
+    //         }
+    //     }
         
-    }
+    // }
+    [self.conversation delete:LYRDeletionModeLocal error:nil];
 }
 
 - (IBAction)CameraButtonPressed:(UIButton *)sender {
